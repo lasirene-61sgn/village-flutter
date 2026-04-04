@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:village/screens/dashboard/model/banner_model.dart';
 import 'package:village/screens/dashboard/notifier/dashboard_notifier.dart';
 import 'package:village/screens/matrimoney/ui/matrimony_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:village/screens/news/notifier/news_notifier.dart';
+import 'package:village/screens/news/ui/news_screen.dart';
+import 'package:village/screens/staff/ui/staff_screen.dart';
 import '../../../config/theme.dart' show AppTheme;
 import '../../members/ui/members_screen.dart';
 import '../../commitie/ui/committee_screen.dart';
@@ -26,10 +31,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void initState() {
     super.initState();
     Future.microtask((){
-      ref.read(dashboardNotifierProvider.notifier).loadBirthdays();
+      // ref.read(dashboardNotifierProvider.notifier).loadBirthdays();
       ref.read(dashboardNotifierProvider.notifier).loadBanner();
-      ref.read(dashboardNotifierProvider.notifier).loadAnniversaries();
+      // ref.read(dashboardNotifierProvider.notifier).loadAnniversaries();
       ref.read(dashboardNotifierProvider.notifier).loadNotification();
+
+      ref.read(newsNotifierProvider.notifier).loadNews();
     });
   }
 
@@ -37,6 +44,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(dashboardNotifierProvider);
+    final newsState = ref.watch(newsNotifierProvider);
+    final unreadCount = state.notification.where((n) => n.isRead == false).length;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppTheme.ssjsSecondaryBlue,
@@ -54,32 +63,35 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           IconButton(
             icon: Stack(
               children: [
-                const Icon(Icons.notifications_none_outlined, color: Colors.black87, size: 28),
-                // Notification badge
-                if(state.notification.isNotEmpty)Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    constraints:  BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child:  Text(
-                      state.notification.length.toString() ,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                const Icon(
+                  Icons.notifications_none_outlined,
+                  color: Colors.black87,
+                  size: 28,
+                ),
+
+                if (unreadCount > 0)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
                       ),
-                      textAlign: TextAlign.center,
+                      constraints:
+                      const BoxConstraints(minWidth: 16, minHeight: 16),
+                      child: Text(
+                        unreadCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
             onPressed: () {
@@ -96,7 +108,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Section Header
-              const Text(
+              if(newsState.newsList.isNotEmpty)const Text(
                 'Latest News',
                 style: TextStyle(
                   fontSize: 20,
@@ -104,7 +116,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   color: Color(0xFF4A3B3B),
                 ),
               ),
-              const SizedBox(height: 12),
+              if(newsState.newsList.isNotEmpty)const SizedBox(height: 12),
+
+              // Running News Ticker
 
               // Running News Ticker
               const RunningNewsTicker(),
@@ -164,50 +178,50 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       );
                     },
                   ),
+                  // MenuButton(
+                  //   icon: Icons.cake_rounded,
+                  //   label: 'Today\'s\nBirthday',
+                  //   onTap: () {
+                  //     _showTodayBirthdays(context,ref);
+                  //   },
+                  // ),
+                  // MenuButton(
+                  //   icon: Icons.favorite_rounded,
+                  //   label: 'Today\'s\nAnniversary',
+                  //   onTap: () {
+                  //     _showTodayAnniversaries(context,ref);
+                  //   },
+                  // ),
+                  // MenuButton(
+                  //   icon: Icons.person,
+                  //   label: 'Matrimoney',
+                  //   onTap: () {
+                  //     Navigator.push(
+                  //       context,
+                  //       MaterialPageRoute(builder: (context) => const MatrimoneyScreen()),
+                  //     );
+                  //   },
+                  // ),
                   MenuButton(
-                    icon: Icons.cake_rounded,
-                    label: 'Today\'s\nBirthday',
-                    onTap: () {
-                      _showTodayBirthdays(context,ref);
-                    },
-                  ),
-                  MenuButton(
-                    icon: Icons.favorite_rounded,
-                    label: 'Today\'s\nAnniversary',
-                    onTap: () {
-                      _showTodayAnniversaries(context,ref);
-                    },
-                  ),
-                  MenuButton(
-                    icon: Icons.person,
-                    label: 'Matrimoney',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const MatrimoneyScreen()),
-                      );
-                    },
-                  ),
-                  MenuButton(
-                    icon: Icons.business_rounded,
-                    label: 'Business\nDirectory',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const BusinessScreen()),
-                      );
-                    },
-                  ),
-                  MenuButton(
-                    icon: Icons.support_agent_rounded,
-                    label: 'HelpLine',
+                    icon: Icons.people_alt_rounded,
+                    label: 'Staff',
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const HelplineScreen()),
+                        MaterialPageRoute(builder: (context) => const StaffScreen()),
                       );
                     },
                   ),
+                  // MenuButton(
+                  //   icon: Icons.support_agent_rounded,
+                  //   label: 'HelpLine',
+                  //   onTap: () {
+                  //     Navigator.push(
+                  //       context,
+                  //       MaterialPageRoute(builder: (context) => const HelplineScreen()),
+                  //     );
+                  //   },
+                  // ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -382,7 +396,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   void _showNotifications(BuildContext context) {
-    final state =ref.watch(dashboardNotifierProvider);
+    final state = ref.watch(dashboardNotifierProvider);
+    final unreadCount = state.notification
+        .where((n) => n.isRead == false)
+        .length;
+
 
     showDialog(
       context: context,
@@ -400,18 +418,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               child: const Icon(Icons.notifications, color: Colors.white),
             ),
             const SizedBox(width: 12),
-            const Text('Notifications'),
-            const Spacer(),
-            TextButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('All notifications marked as read'),
-                    backgroundColor: Color(0xFF1E90FF),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-                Navigator.pop(context);
+
+            // Wrap the Text in Expanded and remove the Spacer()
+            const Expanded(
+              child: Text(
+                'Notifications',
+                overflow: TextOverflow.ellipsis, // Prevents overflow if space gets too tight
+              ),
+            ),
+
+            if(unreadCount>0) TextButton(
+              onPressed: () async {
+                await ref.read(dashboardNotifierProvider.notifier).loadNotificationPost();
+
               },
               child: const Text(
                 'Mark all read',
@@ -423,130 +442,164 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         contentPadding: EdgeInsets.zero,
         content: SizedBox(
           width: double.maxFinite,
-          child:state.isSaving &&  state.notification.isEmpty?
-              const Center(
-                child: CircularProgressIndicator(),
-              )
-              :
-          state.notification.isEmpty
+          child: state.isSaving && state.notification.isEmpty
+              ? const Center(child: CircularProgressIndicator())
+              : state.notification.isEmpty
               ? const Padding(
-                  padding: EdgeInsets.all(32.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.notifications_none, size: 64, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text(
-                        'No notifications',
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: state.notification.length,
-                  itemBuilder: (context, index) {
-                    final notification = state.notification[index];
-                    return InkWell(
-                      onTap: () {
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Opening: ${notification.title}'),
-                            backgroundColor: const Color(0xFF1E90FF),
-                            duration: const Duration(seconds: 1),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color:
-                          // notification['isRead'] as bool
-                          //     ?
-                            Colors.white,
-                              // : const Color(0xFF1E90FF).withValues(alpha: 0.05),
-                          border: Border(
-                            bottom: BorderSide(color: Colors.grey[200]!),
-                          ),
-                        ),
-                        child: ListTile(
-                          leading: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: notification.type =="event"? Color(0xFF4CAF50):
-                              notification.type =="gallery"?Color(0xFF2196F3):
-                              notification.type =="news"? Color(0xFF4CAF50):
-                              notification.type =="anniversary"? Color(0xFFE91E63):
-                              notification.type =="birthday"? Color(0xFF9C27B0):
-                              null,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              notification.type =="event"? Icons.event:
-                                  notification.type =="gallery"? Icons.photo_library:
-                                  notification.type =="news"? Icons.newspaper:
-                                  notification.type =="anniversary"? Icons.favorite:
-                                  notification.type =="birthday"? Icons.celebration:
-                              null,
-                              color:
-                              Colors.white,
-                              size: 24,
-                            ),
-                          ),
-                          title: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  notification.title,
-                                  style: TextStyle(
-                                    fontWeight:
-                                    // notification['isRead'] as bool
-                                    //     ?
-                                    FontWeight.normal
-                                        // : FontWeight.bold
-                                    ,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                              // if (!(notification['isRead'] as bool))
-                              //   Container(
-                              //     width: 8,
-                              //     height: 8,
-                              //     decoration: const BoxDecoration(
-                              //       color: Color(0xFF1E90FF),
-                              //       shape: BoxShape.circle,
-                              //     ),
-                              //   ),
-                            ],
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 4),
-                              Text(
-                                notification.message.toString(),
-                                style: const TextStyle(fontSize: 12),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                notification.createdAt.toString(),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                          isThreeLine: true,
-                        ),
-                      ),
-                    );
-                  },
+            padding: EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.notifications_none,
+                  size: 64,
+                  color: Colors.grey,
                 ),
+                SizedBox(height: 16),
+                Text(
+                  'No notifications',
+                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                ),
+              ],
+            ),
+          )
+              : ListView.builder(
+            shrinkWrap: true,
+            itemCount: state.notification.length,
+            itemBuilder: (context, index) {
+              final notification = state.notification[index];
+              return InkWell(
+                onTap: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Opening: ${notification.title}'),
+                      backgroundColor: const Color(0xFF1E90FF),
+                      duration: const Duration(seconds: 1),
+                    ),
+                  );
+                },
+                child: GestureDetector(
+                  onTap: ()async{
+                    Navigator.pop(context);
+                    if(notification.type == "event" ||notification.type == "event_added") {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EventsScreen(),
+                        ),
+                      );
+                    }else if(notification.type == "news" ||notification.type == "news_added") {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NewsScreen(),
+                        ),
+                      );
+                    }
+                    else if(notification.type == "gallery_added"  ||notification.type == "gallery") {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const GalleryScreen(),
+                        ),
+                      );
+                    }
+                    // else if(notification.type == "birthday"  ||notification.type == "birthday_added") {
+                    //   Navigator.push(
+                    //     context,
+                    //     MaterialPageRoute(
+                    //       builder: (context) => const GalleryScreen(),
+                    //     ),
+                    //   );
+                    // }
+                    await ref.read(dashboardNotifierProvider.notifier).loadSingleNotificationPost(notification.id.toString());
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color:
+                      // notification['isRead'] as bool
+                      //     ?
+                      Colors.white,
+                      // : const Color(0xFF1E90FF).withValues(alpha: 0.05),
+                      border: Border(
+                        bottom: BorderSide(color: Colors.grey[200]!),
+                      ),
+                    ),
+                    child: ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: notification.type == "event"  ||notification.type == "event_added"
+                              ? Color(0xFF4CAF50)
+                              : notification.type == "gallery" ||notification.type == "gallery_added"
+                              ? Color(0xFF2196F3)
+                              : notification.type == "news" ||notification.type == "news_added"
+                              ? Color(0xFF4CAF50)
+                              : notification.type == "anniversary" ||notification.type == "anniversary_added"
+                              ? Color(0xFFE91E63)
+                              : notification.type == "birthday"||notification.type == "birthday_added"
+                              ? Color(0xFF9C27B0)
+                              : null,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          notification.type == "event" ||notification.type == "event_added"
+                              ? Icons.event
+                              : notification.type == "gallery"||notification.type == "gallery_added"
+                              ? Icons.photo_library
+                              : notification.type == "news"||notification.type == "news_added"
+                              ? Icons.newspaper
+                              : notification.type == "anniversary" ||notification.type == "anniversary_added"
+                              ? Icons.favorite
+                              : notification.type == "birthday"||notification.type == "birthday_added"
+                              ? Icons.celebration
+                              : null,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      title: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              notification.title,
+                              style: TextStyle(
+                                fontWeight: FontWeight.normal,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+
+                        ],
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 4),
+                          Text(
+                            notification.message.toString(),
+                            style: const TextStyle(fontSize: 12),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            notification.createdAt.toString(),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                      isThreeLine: true,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
         actions: [
           TextButton(
@@ -560,7 +613,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
 }
 
-// Custom Widget for the Gradient Menu Buttons
 class MenuButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -605,14 +657,14 @@ class MenuButton extends StatelessWidget {
             Icon(
               icon,
               size: 48,
-              color: Colors.white,
+              color: AppTheme.deepRedColor,
             ),
             const SizedBox(height: 8),
             Text(
               label,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                color: Colors.white,
+                color: Colors.black,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -625,6 +677,7 @@ class MenuButton extends StatelessWidget {
 }
 
 
+
 class PromotionalBanner extends ConsumerStatefulWidget {
   const PromotionalBanner({super.key});
 
@@ -635,19 +688,57 @@ class PromotionalBanner extends ConsumerStatefulWidget {
 class _PromotionalBannerState extends ConsumerState<PromotionalBanner> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoSlide();
+  }
+
+  void _startAutoSlide() {
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      final state = ref.read(dashboardNotifierProvider);
+      final banners = state.banners;
+
+      if (banners.isEmpty || !_pageController.hasClients) return;
+
+      final nextPage = (_currentPage + 1) % banners.length;
+
+      _pageController.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+
+      setState(() => _currentPage = nextPage);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(dashboardNotifierProvider);
     final banners = state.banners;
 
-    /// ✅ IF EMPTY → SizedBox
     if (state.isLoading && banners.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: SizedBox(
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(),
+        ),
+      );
     }
 
     if (banners.isEmpty) {
-      return const SizedBox(); // 👈 REQUIRED
+      return const SizedBox();
     }
 
     return Column(
@@ -702,9 +793,15 @@ class _PromotionalBannerState extends ConsumerState<PromotionalBanner> {
           width: double.infinity,
           loadingBuilder: (context, child, progress) {
             if (progress == null) return child;
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(),
+              ),
+            );
           },
-          errorBuilder: (context, error, stackTrace) {
+          errorBuilder: (_, __, ___) {
             return const Center(child: Icon(Icons.broken_image, size: 40));
           },
         ),
@@ -712,14 +809,16 @@ class _PromotionalBannerState extends ConsumerState<PromotionalBanner> {
     );
   }
 }
-class RunningNewsTicker extends StatefulWidget {
+
+class RunningNewsTicker extends ConsumerStatefulWidget {
   const RunningNewsTicker({super.key});
 
   @override
-  State<RunningNewsTicker> createState() => _RunningNewsTickerState();
+  ConsumerState<RunningNewsTicker> createState() => _RunningNewsTickerState();
 }
 
-class _RunningNewsTickerState extends State<RunningNewsTicker> with SingleTickerProviderStateMixin {
+class _RunningNewsTickerState extends ConsumerState<RunningNewsTicker>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Offset> _animation;
 
@@ -743,10 +842,7 @@ class _RunningNewsTickerState extends State<RunningNewsTicker> with SingleTicker
     _animation = Tween<Offset>(
       begin: const Offset(1.0, 0.0),
       end: const Offset(-1.0, 0.0),
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.linear,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
   }
 
   @override
@@ -757,15 +853,19 @@ class _RunningNewsTickerState extends State<RunningNewsTicker> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
-    final newsText = _newsItems.join('  •  ');
+    final state = ref.watch(newsNotifierProvider);
+    final newsText = state.newsList.map((news) => news.title).join('   •   ');
 
-    return Container(
+    return newsText.isEmpty
+        ? SizedBox()
+        : Container(
       height: 40,
       decoration: BoxDecoration(
-        // Change color to transparent or a neutral color to remove blue
-        color: Colors.grey.shade100,
+     color: AppTheme.ssjsPrimaryBlue,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300), // Optional border for visibility
+        border: Border.all(
+          color: Colors.grey.shade300,
+        ), // Optional border for visibility
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
@@ -777,7 +877,7 @@ class _RunningNewsTickerState extends State<RunningNewsTicker> with SingleTicker
               child: Row(
                 children: [
                   _buildNewsText(newsText),
-                  _buildNewsText(newsText),
+                  // _buildNewsText(newsText),
                 ],
               ),
             ),
@@ -790,15 +890,19 @@ class _RunningNewsTickerState extends State<RunningNewsTicker> with SingleTicker
               left: 8,
               top: 8,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: AppTheme.ssjsSecondaryBlue, // Changed to match your theme
+                  color: Colors.white,
+                  // Changed to match your theme
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Text(
                   'LATEST',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -818,7 +922,7 @@ class _RunningNewsTickerState extends State<RunningNewsTicker> with SingleTicker
         child: Text(
           text,
           style: const TextStyle(
-            color: Colors.black87, // Changed from white to black for contrast
+            color: Colors.white, // Changed from white to black for contrast
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -827,7 +931,6 @@ class _RunningNewsTickerState extends State<RunningNewsTicker> with SingleTicker
     );
   }
 }
-
 // Simple painter to create the geometric shape background in the banner
 class TrianglePainter extends CustomPainter {
   @override

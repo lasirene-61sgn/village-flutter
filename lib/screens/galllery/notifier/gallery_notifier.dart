@@ -2,10 +2,9 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:village/screens/galllery/model/gallery_model.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:village/services/api/api_client/api_client.dart';
-import 'package:village/services/api/repo/repo.dart';
 
 /// ======================
 /// STATE
@@ -63,7 +62,7 @@ class GalleryNotifier extends StateNotifier<GalleryState> {
     );
 
     try {
-      final response = await ApiClient().get('api/customer/gallery');
+      final response = await ApiClient().get(endpoint: 'api/customer/gallery');
 
       if (response['status'] == 1) {
         final dynamic rawData = response['data']?['data'];
@@ -102,62 +101,62 @@ class GalleryNotifier extends StateNotifier<GalleryState> {
   /// ======================
   /// CREATE / UPDATE GALLERY
   /// ======================
-  Future<void> submitGallery(
-      BuildContext context,
-      Map<String, dynamic> payload, {
-        String? galleryId,
-        PlatformFile? profilePhoto,
-        PlatformFile? aadharPhoto,
-      }) async {
-    state = state.copyWith(isSaving: true, error: null);
-
-    try {
-      final isCreate = galleryId == null || galleryId.isEmpty;
-
-      final response = await Repo().adminsPost(
-        isCreate ? 'POST' : 'PUT',
-        isCreate
-            ? 'user/Admin/registration/'
-            : 'user/Admin/update/$galleryId/',
-        payload,
-        profilePhoto: profilePhoto,
-        aadharPhoto: aadharPhoto,
-      );
-
-      if (response['status'] == 1) {
-        await loadGallery();
-      }
-    } catch (e) {
-      state = state.copyWith(
-        isSaving: false,
-        error: 'Failed to save gallery',
-      );
-    } finally {
-      state = state.copyWith(isSaving: false);
-    }
-  }
-
-  /// ======================
-  /// LOAD SINGLE GALLERY
-  /// ======================
-  Future<void> loadGalleryDetails(String id) async {
-    state = state.copyWith(isSaving: true, error: null);
-
-    try {
-      final response = await Repo().adminDetails(id);
-      final gallery = GalleryModel.fromJson(response['data']);
-
-      state = state.copyWith(
-        isSaving: false,
-        selectedGallery: gallery,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isSaving: false,
-        error: 'Failed to load gallery details',
-      );
-    }
-  }
+  // Future<void> submitGallery(
+  //     BuildContext context,
+  //     Map<String, dynamic> payload, {
+  //       String? galleryId,
+  //       PlatformFile? profilePhoto,
+  //       PlatformFile? aadharPhoto,
+  //     }) async {
+  //   state = state.copyWith(isSaving: true, error: null);
+  //
+  //   try {
+  //     final isCreate = galleryId == null || galleryId.isEmpty;
+  //
+  //     final response = await Repo().adminsPost(
+  //       isCreate ? 'POST' : 'PUT',
+  //       isCreate
+  //           ? 'user/Admin/registration/'
+  //           : 'user/Admin/update/$galleryId/',
+  //       payload,
+  //       profilePhoto: profilePhoto,
+  //       aadharPhoto: aadharPhoto,
+  //     );
+  //
+  //     if (response['status'] == 1) {
+  //       await loadGallery();
+  //     }
+  //   } catch (e) {
+  //     state = state.copyWith(
+  //       isSaving: false,
+  //       error: 'Failed to save gallery',
+  //     );
+  //   } finally {
+  //     state = state.copyWith(isSaving: false);
+  //   }
+  // }
+  //
+  // /// ======================
+  // /// LOAD SINGLE GALLERY
+  // /// ======================
+  // Future<void> loadGalleryDetails(String id) async {
+  //   state = state.copyWith(isSaving: true, error: null);
+  //
+  //   try {
+  //     final response = await Repo().adminDetails(id);
+  //     final gallery = GalleryModel.fromJson(response['data']);
+  //
+  //     state = state.copyWith(
+  //       isSaving: false,
+  //       selectedGallery: gallery,
+  //     );
+  //   } catch (e) {
+  //     state = state.copyWith(
+  //       isSaving: false,
+  //       error: 'Failed to load gallery details',
+  //     );
+  //   }
+  // }
 }
 
 /// ======================

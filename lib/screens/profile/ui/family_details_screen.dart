@@ -1,14 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:village/screens/profile/notifier/profile_notifier.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import '../../../config/theme.dart';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:village/screens/profile/notifier/profile_notifier.dart';
-import 'package:village/screens/profile/model/family_member_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:village/screens/profile/notifier/profile_notifier.dart';
 import '../../../config/theme.dart';
+
+import '../model/family_member_model.dart';
 
 class FamilyDetailsScreen extends ConsumerStatefulWidget {
   const FamilyDetailsScreen({super.key});
@@ -31,8 +30,8 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
     showDialog(
       context: context,
       builder: (context) => _AddFamilyMemberDialog(
-        onAdd: (memberPayload) async {
-          await ref.read(profileNotifierProvider.notifier).addFamily(context, memberPayload);
+        onAdd: (memberPayload, imageFile) async {
+          await ref.read(profileNotifierProvider.notifier).addFamily(context,imageFile, memberPayload,);
           // Refresh list after adding
           ref.read(profileNotifierProvider.notifier).loadMember();
         },
@@ -46,10 +45,11 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
       builder: (context) => _AddFamilyMemberDialog(
         // Pass the model's current data to the dialog
         initialData: member.toJson(),
-        onAdd: (memberPayload) async {
+        onAdd: (memberPayload,f) async {
           await ref.read(profileNotifierProvider.notifier).updateFamily(
             context,
             member.id.toString(),
+            f,
             memberPayload,
           );
         },
@@ -64,13 +64,17 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
     final familyMembers = profileState.familyMember ?? [];
 
     return Scaffold(
+      backgroundColor: Colors.white,
+
       appBar: AppBar(
+        automaticallyImplyLeading: true,
         title: const Text('Family Details'),
         backgroundColor: AppTheme.ssjsSecondaryBlue,
         foregroundColor: AppTheme.backgroundWhite,
+        iconTheme: IconThemeData(color: Colors.black),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add,color: Colors.black,),
             onPressed: _addFamilyMember,
           ),
         ],
@@ -82,34 +86,105 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
             ? _buildEmptyState()
             : ListView.builder(
           itemCount: familyMembers.length,
+          padding: const EdgeInsets.symmetric(vertical: 12), // Added padding top/bottom
           itemBuilder: (context, index) {
             final member = familyMembers[index];
-            return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: AppTheme.primaryBlue,
-                  child: Icon(
-                    _getRelationIcon(member.relationship),
-                    color: Colors.white,
-                  ),
-                ),
-                title: Text(member.name),
-                subtitle: Text(member.relationship),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit, color: AppTheme.primaryBlue),
-                      onPressed: () => _editFamilyMember(member),
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16), // Match card corners
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FamilyMemberDetailScreen(member: member),
                     ),
-                    // IconButton(
-                    //   icon: const Icon(Icons.delete, color: Colors.red),
-                    //   onPressed: () {
-                    //     // Add delete logic in Notifier if needed
-                    //   },
-                    // ),
-                  ],
+                  );
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    // Suble border instead of heavy shadow
+                    border: Border.all(color: Colors.grey.withOpacity(0.15), width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    child: Row(
+                      children: [
+                        // Clean Avatar Section
+                        Container(
+                          width: 54,
+                          height: 54,
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryBlue.withOpacity(0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: ClipOval(
+                            child: (member.image != null && member.image!.isNotEmpty)
+                                ? Image.network(
+                              member.image!,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, progress) {
+                                if (progress == null) return child;
+                                return const Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)));
+                              },
+                              errorBuilder: (context, error, stackTrace) => _buildDefaultIcon(member),
+                            )
+                                : _buildDefaultIcon(member),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+
+                        // Text Content Section
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                member.name,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1A1A1A),
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                member.relationship,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Actions Section
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryBlue.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.edit_outlined, size: 20),
+                            color: AppTheme.primaryBlue,
+                            onPressed: () => _editFamilyMember(member),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             );
@@ -123,7 +198,16 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
       ),
     );
   }
-
+  Widget _buildDefaultIcon(FamilyMember member) {
+    return Container(
+      color: AppTheme.primaryBlue,
+      child: Icon(
+        _getRelationIcon(member.relationship), // Ensure this matches your model field
+        color: Colors.white,
+        size: 24,
+      ),
+    );
+  }
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -150,7 +234,7 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
 
 class _AddFamilyMemberDialog extends StatefulWidget {
   final Map<String, dynamic>? initialData;
-  final Function(Map<String, dynamic>) onAdd;
+  final Function(Map<String, dynamic>, File?) onAdd;
 
   const _AddFamilyMemberDialog({
     this.initialData,
@@ -163,8 +247,9 @@ class _AddFamilyMemberDialog extends StatefulWidget {
 
 class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
   final _formKey = GlobalKey<FormState>();
+  final _picker = ImagePicker();
 
-  // Controllers (for non-date fields only)
+  // TEXT CONTROLLERS
   late TextEditingController _nameController;
   late TextEditingController _relationController;
   late TextEditingController _mobileController;
@@ -176,9 +261,12 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
   late TextEditingController _nativePlaceController;
   late TextEditingController _notesController;
 
-  // Date variables (NOT controllers — we manage dates as DateTime?)
+  // DATE
   DateTime? _selectedDob;
   DateTime? _selectedAnniversary;
+
+  // IMAGE
+  File? _selectedImage;
 
   String _selectedGender = 'male';
   bool _isMatrimony = false;
@@ -186,6 +274,7 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
   @override
   void initState() {
     super.initState();
+
     _nameController = TextEditingController(text: widget.initialData?['name']);
     _relationController = TextEditingController(text: widget.initialData?['relationship']);
     _mobileController = TextEditingController(text: widget.initialData?['mobile']);
@@ -197,87 +286,70 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
     _nativePlaceController = TextEditingController(text: widget.initialData?['native_place']);
     _notesController = TextEditingController(text: widget.initialData?['notes']);
 
-    // Initialize dates from initialData (string -> DateTime)
-    final dobStr = widget.initialData?['date_of_birth'];
-    if (dobStr != null && dobStr.isNotEmpty) {
-      _selectedDob = DateTime.tryParse(dobStr) ?? null;
-    }
-
-    final annivStr = widget.initialData?['anniversary_date'];
-    if (annivStr != null && annivStr.isNotEmpty) {
-      _selectedAnniversary = DateTime.tryParse(annivStr) ?? null;
-    }
-
     _selectedGender = widget.initialData?['gender'] ?? 'male';
     _isMatrimony = widget.initialData?['matrimony'] ?? false;
+
+    if (widget.initialData?['date_of_birth'] != null) {
+      _selectedDob = DateTime.tryParse(widget.initialData!['date_of_birth']);
+    }
+    if (widget.initialData?['anniversary_date'] != null) {
+      _selectedAnniversary = DateTime.tryParse(widget.initialData!['anniversary_date']);
+    }
   }
 
   @override
   void dispose() {
-    // Dispose only text controllers
-    for (var controller in [
-      _nameController, _relationController, _mobileController,
-      _gotraController, _occupationController,
-      _educationController, _bloodGroupController, _hobbiesController,
-      _nativePlaceController, _notesController
+    for (var c in [
+      _nameController,
+      _relationController,
+      _mobileController,
+      _gotraController,
+      _occupationController,
+      _educationController,
+      _bloodGroupController,
+      _hobbiesController,
+      _nativePlaceController,
+      _notesController,
     ]) {
-      controller.dispose();
+      c.dispose();
     }
     super.dispose();
   }
 
-  // DATE PICKER METHODS
-  Future<void> _selectDate(BuildContext context, bool isDob) async {
-    final DateTime? picked = await showDatePicker(
+  // IMAGE PICKER
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? picked = await _picker.pickImage(
+      source: source,
+      imageQuality: 80,
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedImage = File(picked.path);
+      });
+    }
+  }
+
+  // DATE PICKER
+  Future<void> _selectDate(bool isDob) async {
+    final picked = await showDatePicker(
       context: context,
-      initialDate: isDob ? (_selectedDob ?? DateTime.now()) : (_selectedAnniversary ?? DateTime.now()),
+      initialDate: DateTime.now(),
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
     );
     if (picked != null) {
       setState(() {
-        if (isDob) {
-          _selectedDob = picked;
-        } else {
-          _selectedAnniversary = picked;
-        }
+        isDob ? _selectedDob = picked : _selectedAnniversary = picked;
       });
     }
   }
 
-  // DISPLAY HELPER
-  String _formatDate(DateTime? date) {
-    if (date == null) return 'Select Date';
-    return DateFormat('dd MMM yyyy').format(date);
-  }
+  String _formatDate(DateTime? d) =>
+      d == null ? 'Select Date' : DateFormat('dd MMM yyyy').format(d);
 
-  // API FORMAT HELPER (ISO 8601: yyyy-MM-dd)
-  String? _formatDateForApi(DateTime? date) {
-    return date?.toIso8601String().split('T').first; // "2025-12-31"
-  }
-
-  // DATE PICKER WIDGET
-  Widget _buildDatePicker(String label, bool isDob) {
-    final date = isDob ? _selectedDob : _selectedAnniversary;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: 'Tap to select date',
-          prefixIcon: Icon(isDob ? Icons.cake : Icons.favorite),
-          border: const OutlineInputBorder(),
-        ),
-        child: InkWell(
-          onTap: () => _selectDate(context, isDob),
-          child: Text(
-            _formatDate(date),
-            style: const TextStyle(fontSize: 16),
-          ),
-        ),
-      ),
-    );
-  }
+  String? _apiDate(DateTime? d) =>
+      d?.toIso8601String().split('T').first;
 
   @override
   Widget build(BuildContext context) {
@@ -287,18 +359,31 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
         key: _formKey,
         child: SingleChildScrollView(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
+
+              // 🔥 IMAGE PICKER UI
+              GestureDetector(
+                onTap: () => _showImageSourceSheet(),
+                child: CircleAvatar(
+                  radius: 45,
+                  backgroundColor: Colors.grey.shade300,
+                  backgroundImage: _selectedImage != null
+                      ? FileImage(_selectedImage!)
+                      : null,
+                  child: _selectedImage == null
+                      ? const Icon(Icons.camera_alt, size: 28)
+                      : null,
+                ),
+              ),
+              const SizedBox(height: 16),
+
               _buildField(_nameController, 'Name', Icons.person, isRequired: true),
-              _buildField(_relationController, 'Relationship', Icons.family_restroom,
-                  hint: 'Brother, Spouse, etc.', isRequired: true),
+              _buildField(_relationController, 'Relationship', Icons.family_restroom, isRequired: true),
               _buildField(_mobileController, 'Mobile', Icons.phone, keyboard: TextInputType.phone),
 
-              // ✅ DATE PICKERS INSTEAD OF TEXT FIELDS
-              _buildDatePicker('Date of Birth', true),
-              _buildDatePicker('Anniversary Date', false),
+              _dateTile('Date of Birth', true),
+              _dateTile('Anniversary Date', false),
 
-              // Rest of fields
               _buildField(_gotraController, 'Gotra', Icons.groups),
               _buildField(_educationController, 'Education', Icons.school),
               _buildField(_occupationController, 'Occupation', Icons.work),
@@ -307,32 +392,20 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
               _buildField(_hobbiesController, 'Hobbies', Icons.palette),
               _buildField(_notesController, 'Notes', Icons.note, maxLines: 2),
 
-              const SizedBox(height: 16),
-              // Gender Selection
               Row(
                 children: [
                   const Text("Gender: "),
-                  Radio<String>(
-                    value: 'male',
-                    groupValue: _selectedGender,
-                    onChanged: (v) => setState(() => _selectedGender = v!),
-                  ),
+                  Radio(value: 'male', groupValue: _selectedGender, onChanged: (v) => setState(() => _selectedGender = v!)),
                   const Text("Male"),
-                  Radio<String>(
-                    value: 'female',
-                    groupValue: _selectedGender,
-                    onChanged: (v) => setState(() => _selectedGender = v!),
-                  ),
+                  Radio(value: 'female', groupValue: _selectedGender, onChanged: (v) => setState(() => _selectedGender = v!)),
                   const Text("Female"),
                 ],
               ),
 
-              // Matrimony Checkbox
               CheckboxListTile(
                 title: const Text("Open for Matrimony"),
                 value: _isMatrimony,
                 onChanged: (v) => setState(() => _isMatrimony = v!),
-                controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: EdgeInsets.zero,
               ),
             ],
@@ -346,11 +419,10 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
             if (_formKey.currentState!.validate()) {
               widget.onAdd({
                 "name": _nameController.text,
-                "image": widget.initialData?['image'] ?? "family/default.jpg",
                 "relationship": _relationController.text,
                 "mobile": _mobileController.text,
-                "date_of_birth": _formatDateForApi(_selectedDob),
-                "anniversary_date": _formatDateForApi(_selectedAnniversary),
+                "date_of_birth": _apiDate(_selectedDob),
+                "anniversary_date": _apiDate(_selectedAnniversary),
                 "gotra": _gotraController.text,
                 "occupation": _occupationController.text,
                 "education": _educationController.text,
@@ -358,41 +430,172 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
                 "hobbies": _hobbiesController.text,
                 "native_place": _nativePlaceController.text,
                 "notes": _notesController.text,
-                "matrimony": _isMatrimony,
-                "gender": _selectedGender
-              });
+                "gender": _selectedGender,
+                "matrimony": _isMatrimony? 1 : 0,
+              }, _selectedImage);
+
               Navigator.pop(context);
             }
           },
-          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryBlue),
           child: const Text('Save'),
         ),
       ],
     );
   }
 
-  // Keep your existing _buildField for non-date inputs
-  Widget _buildField(TextEditingController controller, String label, IconData icon,
-      {String? hint, bool isRequired = false, TextInputType? keyboard, int maxLines = 1}) {
+  Widget _dateTile(String label, bool isDob) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(isDob ? Icons.cake : Icons.favorite),
+      title: Text(label),
+      subtitle: Text(_formatDate(isDob ? _selectedDob : _selectedAnniversary)),
+      onTap: () => _selectDate(isDob),
+    );
+  }
+
+  Widget _buildField(
+      TextEditingController controller,
+      String label,
+      IconData icon, {
+        bool isRequired = false,
+        TextInputType? keyboard,
+        int maxLines = 1,
+      }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: controller,
+        keyboardType: keyboard,
+        maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
-          hintText: hint,
           prefixIcon: Icon(icon),
           border: const OutlineInputBorder(),
         ),
-        keyboardType: keyboard,
-        maxLines: maxLines,
-        validator: (value) {
-          if (isRequired && (value == null || value.isEmpty)) {
-            return 'Please enter $label';
-          }
-          return null;
-        },
+        validator: (v) =>
+        isRequired && (v == null || v.isEmpty) ? 'Enter $label' : null,
       ),
+    );
+  }
+
+  void _showImageSourceSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo),
+              title: const Text('Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+class FamilyMemberDetailScreen extends StatelessWidget {
+  final FamilyMember member;
+
+  const FamilyMemberDetailScreen({super.key, required this.member});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(member.name),
+        backgroundColor: AppTheme.ssjsSecondaryBlue,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Profile Header
+            Center(
+              child: CircleAvatar(
+                radius: 60,
+                backgroundColor: AppTheme.primaryBlue.withOpacity(0.1),
+                backgroundImage: (member.image != null && member.image!.isNotEmpty)
+                    ? NetworkImage(member.image!)
+                    : null,
+                child: (member.image == null || member.image!.isEmpty)
+                    ? const Icon(Icons.person, size: 60, color: AppTheme.primaryBlue)
+                    : null,
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Details Card
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  children: [
+                    _buildDetailRow('Relationship', member.relationship, Icons.family_restroom),
+                    _buildDetailRow('Mobile', member.mobile, Icons.phone),
+                    _buildDetailRow('Gender', member.gender, Icons.wc),
+                    _buildDetailRow('Date of Birth', member.dateOfBirth, Icons.cake),
+                    _buildDetailRow('Anniversary', member.anniversaryDate, Icons.favorite),
+                    _buildDetailRow('Gotra', member.gotra, Icons.groups),
+                    _buildDetailRow('Education', member.education, Icons.school),
+                    _buildDetailRow('Occupation', member.occupation, Icons.work),
+                    _buildDetailRow('Blood Group', member.bloodGroup, Icons.bloodtype),
+                    _buildDetailRow('Native Place', member.nativePlace, Icons.home),
+                    _buildDetailRow('Hobbies', member.hobbies, Icons.palette),
+                    _buildDetailRow('Notes', member.notes, Icons.note),
+
+                    // Special case for Matrimony
+                    // if (member.matrimony == true)
+                    //   const ListTile(
+                    //     leading: Icon(Icons.star, color: Colors.orange),
+                    //     title: Text("Open for Matrimony", style: TextStyle(fontWeight: FontWeight.bold)),
+                    //   ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 🔥 This helper method handles the "not empty / not null" logic
+  Widget _buildDetailRow(String label, dynamic value, IconData icon) {
+    if (value == null || value.toString().trim().isEmpty) {
+      return const SizedBox.shrink(); // Returns nothing if empty
+    }
+
+    // If the value is a DateTime, format it
+    String displayValue = value.toString();
+    if (value is DateTime) {
+      displayValue = DateFormat('dd MMM yyyy').format(value);
+    }
+
+    return Column(
+      children: [
+        ListTile(
+          leading: Icon(icon, color: AppTheme.primaryBlue),
+          title: Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          subtitle: Text(displayValue, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.black)),
+        ),
+        const Divider(height: 1, indent: 70),
+      ],
     );
   }
 }

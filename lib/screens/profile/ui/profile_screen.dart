@@ -86,26 +86,48 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     width: 3,
                                   ),
                                 ),
-                                child: const Icon(
-                                  Icons.person,
-                                  color: AppTheme.primaryBlue,
-                                  size: 80,
+                                child: ClipOval(
+                                  child: profile.image != null && profile.image!.isNotEmpty
+                                      ? Image.network(
+                                    profile.image!,
+                                    fit: BoxFit.cover,
+                                    // --- LOADING STATE ---
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return const Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      );
+                                    },
+                                    // --- ERROR STATE ---
+                                    errorBuilder: (context, error, stackTrace) => const Icon(
+                                      Icons.person,
+                                      color: AppTheme.primaryBlue,
+                                      size: 80,
+                                    ),
+                                  )
+                                      : const Icon(
+                                    Icons.person,
+                                    color: AppTheme.primaryBlue,
+                                    size: 80,
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 16),
                               Text(
                                 profile.name,
                                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  fontWeight: FontWeight.bold,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 profile.mobile,
                                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: AppTheme.textGrey,
-                                    ),
+                                  color: AppTheme.textGrey,
+                                ),
                               ),
                             ],
                           ),
@@ -142,58 +164,64 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         //     }
                         //   },
                         // ),
-                        _buildProfileOption(
-                          context,
-                          icon: Icons.family_restroom,
-                          title: 'Family Details',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const FamilyDetailsScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildProfileOption(
-                          context,
-                          icon: Icons.notifications,
-                          title: 'Notifications',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const NotificationsScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildProfileOption(
-                          context,
-                          icon: Icons.privacy_tip,
-                          title: 'Privacy Settings',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const PrivacySettingsScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        _buildProfileOption(
-                          context,
-                          icon: Icons.help,
-                          title: 'Help & Support',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const HelpSupportScreen(),
-                              ),
-                            );
-                          },
-                        ),
+
+                        // family detail screen root way  now not allow for a village client then we want family uncomment this only auto get fully
+
+
+                        // _buildProfileOption(
+                        //   context,
+                        //   icon: Icons.family_restroom,
+                        //   title: 'Family Details',
+                        //   onTap: () {
+                        //     Navigator.push(
+                        //       context,
+                        //       MaterialPageRoute(
+                        //         builder: (context) => const FamilyDetailsScreen(),
+                        //       ),
+                        //     );
+                        //   },
+                        // ),
+
+
+                        // _buildProfileOption(
+                        //   context,
+                        //   icon: Icons.notifications,
+                        //   title: 'Notifications',
+                        //   onTap: () {
+                        //     Navigator.push(
+                        //       context,
+                        //       MaterialPageRoute(
+                        //         builder: (context) => const NotificationsScreen(),
+                        //       ),
+                        //     );
+                        //   },
+                        // ),
+                        // _buildProfileOption(
+                        //   context,
+                        //   icon: Icons.privacy_tip,
+                        //   title: 'Privacy Settings',
+                        //   onTap: () {
+                        //     Navigator.push(
+                        //       context,
+                        //       MaterialPageRoute(
+                        //         builder: (context) => const PrivacySettingsScreen(),
+                        //       ),
+                        //     );
+                        //   },
+                        // ),
+                        // _buildProfileOption(
+                        //   context,
+                        //   icon: Icons.help,
+                        //   title: 'Help & Support',
+                        //   onTap: () {
+                        //     Navigator.push(
+                        //       context,
+                        //       MaterialPageRoute(
+                        //         builder: (context) => const HelpSupportScreen(),
+                        //       ),
+                        //     );
+                        //   },
+                        // ),
                         _buildProfileOption(
                           context,
                           icon: Icons.info,
@@ -316,7 +344,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Shree Sirohi Jain Sangh Chennai',
+              'SRJT  Chennai',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),

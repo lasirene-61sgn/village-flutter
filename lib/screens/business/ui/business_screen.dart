@@ -85,15 +85,6 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
     return ['All', ...categories];
   }
 
-  List<Map<String, dynamic>> get _filteredBusinesses {
-    return _businesses.where((business) {
-      final matchesSearch = business['name'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          business['owner'].toString().toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          business['category'].toString().toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesCategory = _selectedCategory == 'All' || business['category'] == _selectedCategory;
-      return matchesSearch && matchesCategory;
-    }).toList();
-  }
  @override
   void initState() {
     super.initState();

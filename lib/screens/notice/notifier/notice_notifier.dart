@@ -2,10 +2,9 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:village/screens/notice/model/notice_model.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:village/services/api/api_client/api_client.dart';
-import 'package:village/services/api/repo/repo.dart';
 
 /// ======================
 /// STATE
@@ -57,7 +56,7 @@ class NoticeNotifier extends StateNotifier<NoticeState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final response = await ApiClient().get('api/customer/notice');
+      final response = await ApiClient().get(endpoint:'api/customer/notice');
 
       if (response['status'] == 1) {
         final rawData = response['data']?['data'];
@@ -90,57 +89,57 @@ class NoticeNotifier extends StateNotifier<NoticeState> {
   }
 
   /// Create / Update Notice
-  Future<void> submitNotice(
-      BuildContext context,
-      Map<String, dynamic> payload, {
-        String? noticeId,
-        PlatformFile? profilePhoto,
-        PlatformFile? aadharPhoto,
-      }) async {
-    state = state.copyWith(isSaving: true, error: null);
-
-    try {
-      final isCreate = noticeId == null || noticeId.isEmpty;
-
-      final response = await Repo().adminsPost(
-        isCreate ? 'POST' : 'PUT',
-        isCreate
-            ? 'user/Admin/registration/'
-            : 'user/Admin/update/$noticeId/',
-        payload,
-        profilePhoto: profilePhoto,
-        aadharPhoto: aadharPhoto,
-      );
-
-      if (response['status'] == 1) {
-        await loadNotices();
-      }
-    } catch (e) {
-      state = state.copyWith(error: 'Failed to save notice');
-    } finally {
-      state = state.copyWith(isSaving: false);
-    }
-  }
+  // Future<void> submitNotice(
+  //     BuildContext context,
+  //     Map<String, dynamic> payload, {
+  //       String? noticeId,
+  //       PlatformFile? profilePhoto,
+  //       PlatformFile? aadharPhoto,
+  //     }) async {
+  //   state = state.copyWith(isSaving: true, error: null);
+  //
+  //   try {
+  //     final isCreate = noticeId == null || noticeId.isEmpty;
+  //
+  //     final response = await Repo().adminsPost(
+  //       isCreate ? 'POST' : 'PUT',
+  //       isCreate
+  //           ? 'user/Admin/registration/'
+  //           : 'user/Admin/update/$noticeId/',
+  //       payload,
+  //       profilePhoto: profilePhoto,
+  //       aadharPhoto: aadharPhoto,
+  //     );
+  //
+  //     if (response['status'] == 1) {
+  //       await loadNotices();
+  //     }
+  //   } catch (e) {
+  //     state = state.copyWith(error: 'Failed to save notice');
+  //   } finally {
+  //     state = state.copyWith(isSaving: false);
+  //   }
+  // }
 
   /// Load Single Notice
-  Future<void> loadNoticeDetails(String id) async {
-    state = state.copyWith(isSaving: true, error: null);
-
-    try {
-      final response = await Repo().adminDetails(id);
-      final notice = Notice.fromJson(response['data']);
-
-      state = state.copyWith(
-        isSaving: false,
-        selectedNotice: notice,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isSaving: false,
-        error: 'Failed to load notice details',
-      );
-    }
-  }
+  // Future<void> loadNoticeDetails(String id) async {
+  //   state = state.copyWith(isSaving: true, error: null);
+  //
+  //   try {
+  //     final response = await Repo().adminDetails(id);
+  //     final notice = Notice.fromJson(response['data']);
+  //
+  //     state = state.copyWith(
+  //       isSaving: false,
+  //       selectedNotice: notice,
+  //     );
+  //   } catch (e) {
+  //     state = state.copyWith(
+  //       isSaving: false,
+  //       error: 'Failed to load notice details',
+  //     );
+  //   }
+  // }
 }
 
 /// ======================

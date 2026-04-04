@@ -18,13 +18,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    
+
     // Setup animation
     _controller = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_controller);
     _controller.forward();
 
@@ -93,7 +93,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   padding: const EdgeInsets.all(20),
                   child: ClipOval(
                     child: Image.asset(
-                      'assets/icon/app_icon.png',
+                      'assets/icon/app_icon.jpg',
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -103,11 +103,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 
                 // App Name
                 const Text(
-                  'SJJSC',
+                  'SRJT',
                   style: TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Colors.black,
                     letterSpacing: 3,
                   ),
                 ),
@@ -115,11 +115,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 const SizedBox(height: 12),
                 
                 const Text(
-                  'Shri Jalore Jain Sangh  Chennai',
+                  'SRJT  Chennai',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w300,
-                    color: Colors.white,
+                    color: Colors.black,
                     letterSpacing: 1,
                   ),
                 ),

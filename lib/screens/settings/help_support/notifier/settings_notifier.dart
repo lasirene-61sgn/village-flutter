@@ -2,9 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:village/screens/settings/help_support/model/support_model.dart';
 import 'package:village/services/api/api_client/api_client.dart';
-import 'package:village/services/api/repo/repo.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
 class SettingsState {
   final bool isLoading;
@@ -51,7 +49,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> loadSettings() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final response = await _apiClient.get('api/customer/support');
+      final response = await _apiClient.get(endpoint: 'api/customer/support');
 
       if (response['status'] == 1 && response['data']?['data'] != null) {
         final profile = SupportProfile.fromJson(response['data']?['data']);
@@ -74,8 +72,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     try {
       // Added await here to ensure response is received
       final response = await _apiClient.put(
-        url: 'api/customer/profile',
-        map: payload,
+        endpoint: 'api/customer/profile',
+         body: payload,
       );
 
       if (response != null && response['status'] == 1) {
@@ -93,8 +91,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     try {
       // Added await here to ensure response is received
       final response = await _apiClient.headerLessPost(
-        url: 'api/customer/profile',
-        map: payload,
+         endpoint: 'api/customer/profile',
+body: payload,
       );
 
       if (response != null && response['status'] == 1) {
@@ -109,18 +107,18 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   }
 
   /// Load Specific Details for editing
-  Future<void> loadSettingsDetails(String id) async {
-    state = state.copyWith(isSaving: true, error: null);
-    try {
-      final response = await Repo().adminDetails(id);
-      if (response['data'] != null) {
-        final profile = SupportProfile.fromJson(response['data']);
-        state = state.copyWith(isSaving: false, selectedProfile: profile);
-      }
-    } catch (e) {
-      state = state.copyWith(isSaving: false, error: 'Failed to load details');
-    }
-  }
+  // Future<void> loadSettingsDetails(String id) async {
+  //   state = state.copyWith(isSaving: true, error: null);
+  //   try {
+  //     final response = await Repo().adminDetails(id);
+  //     if (response['data'] != null) {
+  //       final profile = SupportProfile.fromJson(response['data']);
+  //       state = state.copyWith(isSaving: false, selectedProfile: profile);
+  //     }
+  //   } catch (e) {
+  //     state = state.copyWith(isSaving: false, error: 'Failed to load details');
+  //   }
+  // }
 }
 
 // Final Provider

@@ -1,5 +1,5 @@
 import 'package:village/screens/commitie/model/commitie_model.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:village/services/api/api_client/api_client.dart';
 
 /// ======================
@@ -48,7 +48,7 @@ class CommitteeNotifier extends StateNotifier<CommitteeState> {
     state = state.copyWith(isLoading: true, isLoaded: false, error: null);
 
     try {
-      final response = await ApiClient().get('api/customer/committee');
+      final response = await ApiClient().get(endpoint: 'api/customer/committee');
 
       if (response['status'] == 1) {
         final List rawList = response['data']?['data'] ?? [];
@@ -81,7 +81,7 @@ class CommitteeNotifier extends StateNotifier<CommitteeState> {
     state = state.copyWith(isSaving: true, error: null);
 
     try {
-      final response = await ApiClient().get('api/customer/event/$id');
+      final response = await ApiClient().get(endpoint: 'api/customer/event/$id');
       final committee = CommitteeMember.fromJson(response['data']);
 
       state = state.copyWith(

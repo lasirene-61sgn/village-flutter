@@ -7,9 +7,14 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
 }
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
 
 android {
-    namespace = "com.example.village"
+    namespace = "com.srjt.chennai"
     // ✅ UPDATED: Required by latest AndroidX dependencies
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
@@ -25,7 +30,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.village"
+        applicationId = "com.srjt.chennai"
         // ✅ RECOMMENDED: 23 provides better support for modern plugins
         minSdk = flutter.minSdkVersion
         // ✅ UPDATED: Matches compileSdk for compatibility
@@ -33,14 +38,33 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String?
+            keyPassword = keystoreProperties["keyPassword"] as String?
+            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
+            storePassword = keystoreProperties["storePassword"] as String?
+        }
+    }
 
     buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("debug")
+        getByName("release") {
+            // ✅ This links to the release signing config above
+            signingConfig = signingConfigs.getByName("release")
+
+            // Optimization settings
             isMinifyEnabled = false
             isShrinkResources = false
         }
     }
+//
+//    buildTypes {
+//        release {
+//            signingConfig = signingConfigs.getByName("debug")
+//            isMinifyEnabled = false
+//            isShrinkResources = false
+//        }
+//    }
 }
 
 flutter {

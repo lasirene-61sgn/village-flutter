@@ -1,5 +1,43 @@
 import 'package:village/screens/dashboard/model/dashboard_model.dart';
 
+class Village {
+  final int id;
+  final int adminId;
+  final String name;
+  final String status;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final int customerCount;
+  final List<Member> customers;
+
+  Village({
+    required this.id,
+    required this.adminId,
+    required this.name,
+    required this.status,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.customerCount,
+    required this.customers,
+  });
+
+  factory Village.fromJson(Map<String, dynamic> json) {
+    return Village(
+      id: json['id'] ?? 0,
+      adminId: json['admin_id'] ?? 0,
+      name: json['name'] ?? '',
+      status: json['status'] ?? '',
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
+      customerCount: json['customer_count'] ?? 0,
+      customers: json['customers'] != null
+          ? (json['customers'] as List)
+          .map((e) => Member.fromJson(e))
+          .toList()
+          : [],
+    );
+  }
+}
 
 class FamilyMember {
   final int id;
@@ -128,10 +166,9 @@ class Member {
   final DateTime updatedAt;
 
   final String? fcmToken;
-  final Village? village;
   final List<FamilyMember> familyMembers;
 
-  Member({
+  const Member({
     required this.id,
     required this.adminCustomerId,
     required this.adminId,
@@ -171,19 +208,22 @@ class Member {
     required this.createdAt,
     required this.updatedAt,
     this.fcmToken,
-    this.village,
     this.familyMembers = const [],
   });
 
-  static DateTime? _parseDate(dynamic v) =>
-      v == null ? null : DateTime.tryParse(v.toString());
+  /// -------- helpers --------
+  static DateTime? _parseDate(dynamic value) {
+    if (value == null || value == '') return null;
+    return DateTime.tryParse(value.toString());
+  }
 
-  static bool _parseBool(dynamic v) {
-    if (v is bool) return v;
-    if (v is int) return v == 1;
+  static bool _parseBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is int) return value == 1;
     return false;
   }
 
+  /// -------- JSON → Model --------
   factory Member.fromJson(Map<String, dynamic> json) {
     return Member(
       id: json['id'] ?? 0,
@@ -234,17 +274,12 @@ class Member {
 
       fcmToken: json['fcm_token'],
 
-      village: json['village'] != null
-          ? Village.fromJson(json['village'])
-          : null,
-
-      familyMembers: json['family_members'] != null
-          ? (json['family_members'] as List)
+      familyMembers: (json['family_members'] as List? ?? [])
           .map((e) => FamilyMember.fromJson(e))
-          .toList()
-          : [],
+          .toList(),
     );
   }
 }
+
 
 

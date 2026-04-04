@@ -1,14 +1,15 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:village/screens/dashboard/model/banner_model.dart';
 import 'package:village/screens/dashboard/model/dashboard_model.dart';
 import 'package:village/screens/dashboard/model/notifiction_model.dart';
 import 'package:village/services/local_storage/shared_preference.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:village/services/api/api_client/api_client.dart';
-import 'package:village/services/api/repo/repo.dart';
+import 'package:village/services/widget/custom_msg.dart';
 
 class DashboardState {
   final bool isLoading;
@@ -66,7 +67,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final response = await ApiClient().get('api/customer/today-birthdays');
+      final response = await ApiClient().get(endpoint: 'api/customer/today-birthdays');
 
       if (response['status'] == 1) {
         final rawData = response['data']?['data'] as List? ?? [];
@@ -87,12 +88,27 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
       );
     }
   }
-
+  Future<void> loadNotificationPost() async {
+    try {
+      // 1. Call the API to mark all as read on the server
+      final response = await ApiClient()
+          .post(endpoint:  'api/customer/notifications/mark-all-read');
+print(response);
+      if (response['status'] == 1) {
+        await loadNotification();
+        Get.back();
+      }else{
+        Toaster.showError(response["message"]?["message"].toString() ?? '');
+      }
+    } catch (e) {
+      debugPrint("Error marking notifications as read: ${e.toString()}");
+    }
+  }
   Future<void> loadBanner() async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final response = await ApiClient().get('api/customer/banner');
+      final response = await ApiClient().get(endpoint: 'api/customer/banner');
 
       if (response['status'] == 1) {
         final rawData = response['data']?['data'] as List? ?? [];
@@ -132,7 +148,7 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     // print("gallery Reminders  :$galleryReminders");
 
     try {
-      final response = await ApiClient().get('api/customer/all-notifications');
+      final response = await ApiClient().get(endpoint: 'api/customer/all-notifications');
 
       if (response['status'] == 1) {
         final rawData = response['data']?['data'] as List? ?? [];
@@ -174,11 +190,25 @@ class DashboardNotifier extends StateNotifier<DashboardState> {
     }
   }
 
+  Future<void> loadSingleNotificationPost(String id) async {
+    try {
+      // 1. Call the API to mark all as read on the server
+      final response = await ApiClient()
+          .post(endpoint: 'api/customer/notifications/$id/read');
+      print("marking Single notifications as read: $response");
+      if (response['status'] == 1) {
+        await loadNotification();
+
+      }
+    } catch (e) {
+      debugPrint("Error marking notifications as read: ${e.toString()}");
+    }
+  }
   Future<void> loadAnniversaries() async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final response = await ApiClient().get('api/customer/today-anniversaries');
+      final response = await ApiClient().get(endpoint: 'api/customer/today-anniversaries');
 
       if (response['status'] == 1) {
         final rawData = response['data']?['data'] as List? ?? [];

@@ -14,7 +14,6 @@ import 'services/api/notification_service/notifiction_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Use DefaultFirebaseOptions here too for the background isolate
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -31,7 +30,6 @@ void main() async {
   // Register background handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // Initialize your notification service
   await NotificationService.init();
   await SharedPreferencesHelper().init();
   String? deviceToken = await NotificationService.getToken();

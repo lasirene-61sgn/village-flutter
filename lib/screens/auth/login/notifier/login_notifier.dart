@@ -1,13 +1,13 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:village/screens/auth/login/model/login_model.dart';
 import 'package:village/screens/auth/otp_verification_screen.dart';
 import 'package:village/screens/auth/set_password_screen.dart';
 import 'package:village/screens/home_screen.dart';
-import 'package:village/services/api/repo/repo.dart';
+import 'package:village/services/api/api_client/api_client.dart';
 import 'package:village/services/local_storage/shared_preference.dart';
 import 'package:village/services/routes/route_name/route_name.dart';
 import 'package:village/services/widget/custom_msg.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:get/get.dart';
 
 class LoginState {
@@ -57,11 +57,15 @@ class LoginState {
 class LoginNotifier extends StateNotifier<LoginState> {
   LoginNotifier() : super(const LoginState());
 
-  Future<void> login(Map map,{String? mobile}) async {
+  Future<void> login(Map<String, dynamic> map,{String? mobile}) async {
     state = state.copyWith(isLoading: true, error: null,mobile: mobile);
 
+    print("____________");
     try {
-      final response = await Repo().logIn(map);
+      final response = await ApiClient().headerLessPost(
+          endpoint: 'api/customer/login',
+         body:  map
+      );
       print(response);
       if (response["status"] == 1) {
         final userData = UserLoginResponse.fromJson(response["data"]);
@@ -80,8 +84,8 @@ class LoginNotifier extends StateNotifier<LoginState> {
           user: userData,
         );
       } else {
-        Toaster.showError(response['message']?["message"]);
-        state = state.copyWith(isLoading: false, error: response['message']?["message"]);
+        Toaster.showError(response["message"]?["message"].toString() ?? "Login Failed");
+        state = state.copyWith(isLoading: false, error: response["message"]);
       }
     } catch (e, stackTrace) {
       final errorMsg = "Network error. Please try again.";
@@ -92,7 +96,7 @@ class LoginNotifier extends StateNotifier<LoginState> {
   }
   Future<void> registerOtpRequest(
       String url,
-      Map map,
+      Map<String, dynamic> map,
       {
         String? otp,
         String? mobile,
@@ -104,7 +108,10 @@ class LoginNotifier extends StateNotifier<LoginState> {
     state = state.copyWith(isOtpLoading: true, error: null, otp: otp,mobile: mobile,);
 
     try {
-      final response = await Repo().otpRequest(url,map);
+      final response = await ApiClient().headerLessPost(
+          endpoint: url ??'api/customer/send-otp',
+          body:map
+      );
       print(response);
       if (response["status"] == 1) {
         final userData = UserLoginResponse.fromJson(response["data"]);
@@ -147,7 +154,7 @@ class LoginNotifier extends StateNotifier<LoginState> {
 
   Future<void> forgotFlowRequest(
       String url,
-      Map map,
+      Map<String, dynamic> map,
       {
         String? otp,
         String? mobile,
@@ -157,7 +164,10 @@ class LoginNotifier extends StateNotifier<LoginState> {
     state = state.copyWith(isForgotLoading: true, error: null, otp: otp,mobile: mobile);
 
     try {
-      final response = await Repo().otpRequest(url,map);
+      final response = await ApiClient().headerLessPost(
+          endpoint: url,
+          body:map
+      );
       print(response);
       if (response["status"] == 1) {
         final userData = UserLoginResponse.fromJson(response["data"]);
@@ -198,7 +208,10 @@ class LoginNotifier extends StateNotifier<LoginState> {
           state.user?.token ??
           await SharedPreferencesHelper().getString("token");
       if (token != null && token.isNotEmpty) {
-        await Repo().logOut(token);
+        await ApiClient().post(
+      endpoint: 'api/customer/logout',
+      body: {},
+    );
       }
 
       await SharedPreferencesHelper().init();

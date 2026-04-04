@@ -227,6 +227,47 @@ class Profile {
       updatedAt: json['updated_at'] ?? '',
     );
   }
+  // Add this inside the Profile class
+  Map<String, dynamic> toJson() {
+    return {
+      "id": id,
+      "admin_customer_id": adminCustomerId.toString(),
+      "admin_id": adminId.toString(),
+      "village_id": villageId,
+      "name": name,
+      "email": email, // Keep email if it exists
+      "father_name": fatherName,
+      "mobile": mobile,
+      "ms_firm_name": msFirmName,
+      "address2": address2,
+      "city": city,
+      "pincode": pincode,
+      "business_type": businessType,
+      "business_name": businessName,
+      "product_service": productService,
+      "office_address": officeAddress,
+      "gender": gender,
+      "age": age,
+      "education": education,
+      "occupation": occupation,
+      "date_of_birth": dateOfBirth != null ? "${dateOfBirth!.year}-${dateOfBirth!.month.toString().padLeft(2, '0')}-${dateOfBirth!.day.toString().padLeft(2, '0')}" : null,
+      "anniversary_date": anniversaryDate != null ? "${anniversaryDate!.year}-${anniversaryDate!.month.toString().padLeft(2, '0')}-${anniversaryDate!.day.toString().padLeft(2, '0')}" : null,
+      "status": status,
+      "area": area ?? "",
+      "gotra": gotra ?? "",
+      "label_name": labelName ?? "",
+      "district": district ?? "",
+      "dno": dno ?? "",
+      "street_road": streetRoad ?? "",
+      "is_password_set": isPasswordSet ? 1 : 0,
+      "whatsapp": whatsapp ?? "",
+      "blood_group": bloodGroup ?? "",
+      "hobbies": hobbies ?? "",
+      "native_place": nativePlace ?? "",
+      "created_at": createdAt,
+      "updated_at": updatedAt,
+    };
+  }
 }
 
 

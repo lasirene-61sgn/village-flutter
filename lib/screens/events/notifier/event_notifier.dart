@@ -2,8 +2,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:village/services/api/api_client/api_client.dart';
-import 'package:village/services/api/repo/repo.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:village/screens/events/model/event_model.dart';
 
@@ -61,7 +60,7 @@ class EventsNotifier extends StateNotifier<EventsState> {
     );
 
     try {
-      final response = await ApiClient().get('api/customer/event');
+      final response = await ApiClient().get(endpoint: 'api/customer/event');
 
       if (response["status"] == 1) {
         print("RAW RESPONSE: $response");
@@ -102,61 +101,8 @@ class EventsNotifier extends StateNotifier<EventsState> {
     }
   }
 
-  /// Create / Update Event
-  Future<void> submitEvent(
-      BuildContext context,
-      Map<String, dynamic> payload, {
-        String? eventId,
-        PlatformFile? profilePhoto,
-        PlatformFile? aadharPhoto,
-      }) async {
-    state = state.copyWith(isSaving: true, error: null);
 
-    try {
-      final isCreate = eventId == null || eventId.isEmpty;
 
-      final response = await Repo().adminsPost(
-        isCreate ? 'POST' : 'PUT',
-        isCreate
-            ? 'user/Admin/registration/'
-            : 'user/Admin/update/$eventId/',
-        payload,
-        profilePhoto: profilePhoto,
-        aadharPhoto: aadharPhoto,
-      );
-
-      if (response['status'] == 1) {
-        await loadEvents();
-      }
-    } catch (e) {
-      state = state.copyWith(
-        isSaving: false,
-        error: 'Failed to save event',
-      );
-    } finally {
-      state = state.copyWith(isSaving: false);
-    }
-  }
-
-  /// Load Single Event Details
-  Future<void> loadEventDetails(String id) async {
-    state = state.copyWith(isSaving: true, error: null);
-
-    try {
-      final response = await Repo().adminDetails(id);
-      final event = Event.fromJson(response['data']);
-
-      state = state.copyWith(
-        isSaving: false,
-        selectedEvent: event,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isSaving: false,
-        error: 'Failed to load event details',
-      );
-    }
-  }
   Future<void> updateRSVP(
       String memberId,
       Map<String, dynamic> payload) async {
@@ -165,8 +111,8 @@ class EventsNotifier extends StateNotifier<EventsState> {
 
     try {
       final response = await ApiClient().post(
-        url: 'api/customer/event/$memberId/rsvp',
-        map: payload,
+        endpoint:'api/customer/event/$memberId/rsvp',
+        body:  payload,
       );
 
       if (response != null && response['status'] == 1) {

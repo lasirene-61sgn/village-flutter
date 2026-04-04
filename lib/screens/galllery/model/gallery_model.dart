@@ -6,6 +6,8 @@ class GalleryModel {
   final List<String> imagePaths;
   final List<String> imagePathsurls;
   final String status;
+  final List<String> videoPaths;
+  final List<String> videoPathsurls;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -17,6 +19,8 @@ class GalleryModel {
     required this.imagePaths,
     required this.imagePathsurls,
     required this.status,
+    required this.videoPaths,
+    required this.videoPathsurls,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -34,6 +38,12 @@ class GalleryModel {
           ? List<String>.from(json['image_paths_url'])
           : [],
       status: json['status'] ?? '',
+      videoPaths: json['video_paths'] != null
+          ? List<String>.from(json['video_paths'])
+          : [],
+      videoPathsurls: json['video_paths_url'] != null
+          ? List<String>.from(json['video_paths_url'])
+          : [],
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
     );
@@ -48,6 +58,8 @@ class GalleryModel {
       'image_paths': imagePaths,
       'image_paths_url': imagePathsurls,
       'status': status,
+      'video_paths': videoPaths,
+      'video_paths_url': videoPathsurls,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };

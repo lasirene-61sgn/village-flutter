@@ -1,533 +1,305 @@
-import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:village/services/local_storage/shared_preference.dart';
-import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
-import 'package:http_parser/http_parser.dart' as http_parser;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
+  late final Dio _dio;
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
-  late final String baseUrl;
-
+  // ------------------ INIT ------------------
   ApiClient() {
-    if (kIsWeb) {
-      baseUrl = "https://jalore.lasirene.xyz";
-    } else {
-      baseUrl = "https://jalore.lasirene.xyz";
-    }
-    debugPrint('ApiClient initialized → baseUrl: $baseUrl');
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: "https://villagea.lasirene.xyz/",
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await _getToken();
+          if (token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          return handler.next(options);
+        },
+        onError: (error, handler) {
+          return handler.next(error);
+        },
+      ),
+    );
   }
 
-  Map<String, String> get defaultHeaders => {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  };
-
-  Future<String> getToken() async {
-    await SharedPreferencesHelper().init();
-    final isLoggedIn = SharedPreferencesHelper().getBool("isLoggedIn") ?? false;
-    final token = SharedPreferencesHelper().getString("token") ?? "";
-    debugPrint('getToken() → isLoggedIn: $isLoggedIn, token: ${token.isNotEmpty ? "present" : "empty"}');
+  // ------------------ TOKEN ------------------
+  Future<String> _getToken() async {
+    final prefs = await _prefs;
+    final isLoggedIn = prefs.getBool("isLoggedIn") ?? false;
+    final token = prefs.getString("token") ?? "";
+    print(token ?? '');
     return isLoggedIn && token.isNotEmpty ? token : "";
   }
 
-  // ------------ Public Methods ------------
-
-  Future<dynamic> get(String endpoint) async {
-    final token = await getToken();
-    final url = '$baseUrl/$endpoint';
-    debugPrint('GET → $url');
-
-    if (token.isEmpty) {
-      debugPrint('Token is empty. Skipping authenticated request.');
-      return {
-        "status": 2,
-        "message": "Unauthenticated. Please log in again."
-      };
-    }
-
-    final headers = {
-      ...defaultHeaders,
-      'Authorization': 'Bearer $token',
-    };
-    debugPrint('Headers → $headers');
-
-    final response = await http.get(Uri.parse(url), headers: headers);
-    debugPrint('GET Response ← ${response.statusCode}');
-    return _handleResponse(response);
-  }
-
-  Future<dynamic> put({required String url, Map? map}) async {
-    final token = await getToken();
-    final fullUrl = '$baseUrl/$url';
-    debugPrint('PUT → $fullUrl');
-    debugPrint('Body → ${json.encode(map ?? {})}');
-
-    final headers = {
-      ...defaultHeaders,
-    };
-    if (token.isNotEmpty) {
-      headers['Authorization'] = 'Bearer $token';
-    }
-    debugPrint('Headers → $headers');
-
+  // ------------------ GET ------------------
+  Future<dynamic> get({
+    String? endpoint,
+    Map<String, dynamic>? query,
+  }) async {
     try {
-      final response = await http.put(
-        Uri.parse(fullUrl),
-        headers: headers,
-        body: json.encode(map ?? {}),
+      final response = await _dio.get(
+        endpoint ?? '',
+        queryParameters: query,
       );
-      debugPrint('PUT Response ← ${response.statusCode}');
       return _handleResponse(response);
     } catch (e) {
-      debugPrint('PUT Exception → $e');
-      return {
-        "status": 0,
-        "message": "An unexpected error occurred: $e"
-      };
+      return _handleDioError(e);
     }
   }
 
-  Future<dynamic> post({required String url, Map? map}) async {
-    final token = await getToken();
-    final fullUrl = '$baseUrl/$url';
-    debugPrint('POST → $fullUrl');
-    debugPrint('Body → ${json.encode(map ?? {})}');
-
-    final headers = {
-      ...defaultHeaders,
-    };
-    if (token.isNotEmpty) {
-      headers['Authorization'] = 'Bearer $token';
-    }
-    debugPrint('Headers → $headers');
-
+  // ------------------ POST ------------------
+  Future<dynamic> post({
+    String? endpoint,
+    Map<String, dynamic>? body,
+  }) async {
     try {
-      final response = await http.post(
-        Uri.parse(fullUrl),
-        headers: headers,
-        body: json.encode(map ?? {}),
+      final response = await _dio.post(
+        endpoint ?? '',
+        data: body ?? {},
       );
-      debugPrint('POST Response ← ${response.statusCode}');
       return _handleResponse(response);
     } catch (e) {
-      debugPrint('POST Exception → $e');
-      return {
-        "status": 0,
-        "message": "An unexpected error occurred: $e"
-      };
+      return _handleDioError(e);
     }
   }
 
-  Future<dynamic> headerLessPost({required String url, Map? map}) async {
-    final fullUrl = '$baseUrl/$url';
-    debugPrint('headerLessPost → $fullUrl');
-    debugPrint('Body → ${json.encode(map ?? {})}');
-
-    final response = await http.post(
-      Uri.parse(fullUrl),
-      headers: defaultHeaders,
-      body: json.encode(map ?? {}),
-    );
-    debugPrint('headerLessPost Response ← ${response.statusCode}');
-    return _handleResponse(response);
+  // ------------------ PUT (JSON) ------------------
+  Future<dynamic> put({
+    String? endpoint,
+    Map<String, dynamic>? body,
+  }) async {
+    try {
+      final response = await _dio.put(
+        endpoint ?? '',
+        data: body ?? {},
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleDioError(e);
+    }
   }
 
+  // ------------------ DELETE ------------------
+  Future<dynamic> delete({
+    String? endpoint,
+    Map<String, dynamic>? body,
+  }) async {
+    try {
+      final response = await _dio.delete(
+        endpoint ?? '',
+        data: body,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleDioError(e);
+    }
+  }
+
+  // ------------------ HEADER LESS POST ------------------
+  Future<dynamic> headerLessPost({
+    String? endpoint,
+    Map<String, dynamic>? body,
+  }) async {
+    try {
+      final dio = Dio(
+        BaseOptions(
+          baseUrl: _dio.options.baseUrl,
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      final response = await dio.post(
+        endpoint ?? '',
+        data: body ?? {},
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleDioError(e);
+    }
+  }
+
+  // ------------------ POST WITH FILES ------------------
   Future<dynamic> postWithFiles({
-    required String url,
-    Map<String, dynamic>? map,
-    Map<String, dynamic> files = const {},   // ← flexible map
-  }) async {
-    final token = await getToken();
-    final fullUrl = '$baseUrl/$url';
-    final request = http.MultipartRequest('POST', Uri.parse(fullUrl));
-
-    // ----- headers -------------------------------------------------
-    final headers = {'Accept': 'application/json'};
-    if (token.isNotEmpty) headers['Authorization'] = 'Token $token';
-    request.headers.addAll(headers);
- print(headers['Authorization']);
-    // ----- form fields ---------------------------------------------
-    map?.forEach((key, value) {
-      if (value != null) request.fields[key] = value.toString();
-    });
-
-    // ----- files (any number, any key) -----------------------------
-    for (final entry in files.entries) {
-      final fieldName = entry.key;
-      final fileData = entry.value;
-
-      // Resolve to List<PlatformFile>
-      final List<PlatformFile> fileList = fileData is PlatformFile
-          ? [fileData]
-          : fileData is List<PlatformFile>
-          ? fileData
-          : [];
-
-      for (final file in fileList) {
-        final mime = lookupMimeType(file.name) ?? 'application/octet-stream';
-        final contentType = MediaType.parse(mime);
-
-        if (kIsWeb) {
-          // ----- WEB -----
-          if (file.bytes != null) {
-            request.files.add(http.MultipartFile.fromBytes(
-              fieldName,
-              file.bytes!,
-              filename: file.name,
-              contentType: contentType,
-            ));
-          }
-        } else {
-          // ----- MOBILE -----
-          if (file.path != null) {
-            final diskFile = File(file.path!);
-            if (await diskFile.exists()) {
-              request.files.add(await http.MultipartFile.fromPath(
-                fieldName,
-                file.path!,
-                filename: file.name,
-                contentType: contentType,
-              ));
-            }
-          }
-        }
-      }
-    }
-
-    // ----- send ----------------------------------------------------
-    final streamed = await request.send();
-    final resp = await http.Response.fromStream(streamed);
-
-    if (resp.statusCode >= 200 && resp.statusCode < 300) {
-      try {
-        return _handleResponse(resp);
-      } catch (_) {
-        return resp.body;
-      }
-    } else {
-      throw Exception('Upload failed (${resp.statusCode}) – ${resp.body}');
-    }
-  }
-  Future<dynamic> putWithFiles({
-    required String url,
-    required String method,
-    Map<String, dynamic>? map,
-    Map<String, dynamic> files = const {},
-  }) async {
-    final token = await getToken();
-    final fullUrl = '$baseUrl/$url';
-    final request = http.MultipartRequest(method, Uri.parse(fullUrl));
-
-    print('PUT WITH FILES → $fullUrl');
-    print('PUT WITH payload → $map');
-
-    // ----- headers -------------------------------------------------
-    final headers = {'Accept': 'application/json'};
-    if (token.isNotEmpty) headers['Authorization'] = 'Token $token';
-    request.headers.addAll(headers);
-    print('PUT WITH header → $headers');
-    // ----- form fields (SANITIZED) ---------------------------------
-    map?.forEach((key, value) {
-      if (value == null || value.toString().trim().isEmpty) return;
-
-      // ✅ FIX: Send more_detail as JSON string
-      if (key == 'more_detail' && value is List && value.isNotEmpty) {
-        try {
-          final jsonString = jsonEncode(value);
-          request.fields['more_detail'] = jsonString;
-          print('DEBUG: more_detail sent as JSON → $jsonString');
-        } catch (e) {
-          print('ERROR: Failed to encode more_detail → $e');
-        }
-      } else {
-        // Regular string fields
-        final stringValue = value.toString().trim();
-        if (stringValue.isNotEmpty) {
-          request.fields[key] = stringValue;
-        }
-      }
-    });
-
-    // ----- files (any number, any key) ----------------------------
-    for (final entry in files.entries) {
-      final fieldName = entry.key;
-      final fileData = entry.value;
-
-      if (fileData == null) continue;
-
-      final List<PlatformFile> fileList = fileData is PlatformFile
-          ? [fileData]
-          : fileData is List<PlatformFile>
-          ? fileData
-          : [];
-
-      for (final file in fileList) {
-        try {
-          final mime = lookupMimeType(file.name) ?? 'application/octet-stream';
-          final contentType = MediaType.parse(mime);
-
-          if (kIsWeb) {
-            if (file.bytes != null && file.bytes!.isNotEmpty) {
-              request.files.add(http.MultipartFile.fromBytes(
-                fieldName,
-                file.bytes!,
-                filename: file.name,
-                contentType: contentType,
-              ));
-              print('DEBUG: File added [WEB] → $fieldName (${file.bytes!.length} bytes)');
-            }
-          } else {
-            if (file.path != null && file.path!.isNotEmpty) {
-              final diskFile = File(file.path!);
-              if (await diskFile.exists()) {
-                request.files.add(await http.MultipartFile.fromPath(
-                  fieldName,
-                  file.path!,
-                  filename: file.name,
-                  contentType: contentType,
-                ));
-                print('DEBUG: File added [MOBILE] → $fieldName');
-              }
-            }
-          }
-        } catch (e) {
-          print('ERROR: Failed to add file [$fieldName] → $e');
-          continue;
-        }
-      }
-    }
-
-    // ----- send request with debugging ----------------------------
-    try {
-      print('DEBUG: Sending request with ${request.fields.length} fields and ${request.files.length} files');
-
-      final streamed = await request.send().timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          throw TimeoutException('Upload request timed out after 30 seconds');
-        },
-      );
-
-      final resp = await http.Response.fromStream(streamed);
-
-      print('Handling response → ${resp.statusCode}');
-      print('Response Body → ${resp.body}');
-
-      if (resp.statusCode >= 200 && resp.statusCode < 300) {
-        return _handleResponse(resp);
-      } else {
-        return _handleResponse(resp);
-      }
-    } on TimeoutException catch (e) {
-      print('ERROR: $e');
-      throw Exception('Request timeout - please check your connection');
-    } catch (e) {
-      print('ERROR: Request failed → $e');
-      rethrow;
-    }
-  }
-
-  Future<dynamic> putWithFilesAdvanced({
-    required String url,
-    required String method,
-    Map<String, dynamic>? map,
-    Map<String, dynamic> files = const {},
+    String? endpoint,
+    Map<String, dynamic>? fields,
+    Map<String, dynamic>? files,
   }) async {
     try {
-      final token = await getToken();
-      final fullUrl = '$baseUrl/$url';
-      final request = http.MultipartRequest(method, Uri.parse(fullUrl));
-
-      // -------- HEADERS --------
-      final headers = {'Accept': 'application/json'};
-      if (token.isNotEmpty) headers['Authorization'] = 'Token $token';
-      request.headers.addAll(headers);
-      print("----------------------------------------------------------------$map");
-
-      // -------- FIELDS (FIXED: Properly serialize nested objects) --------
-      map?.forEach((key, value) {
-        if (value != null) {
-          // Check if value is a Map or List - serialize to JSON
-          if (value is Map || value is List) {
-            request.fields[key] = jsonEncode(value);
-          } else {
-            request.fields[key] = value.toString();
-          }
+      final formData = FormData();
+        print("this is a files$files");
+      fields?.forEach((k, v) {
+        if (v != null) {
+          formData.fields.add(MapEntry(k, v.toString()));
         }
       });
 
-      // -------- FILES (SAFE HANDLING + ERROR LOGS) --------
-      for (final entry in files.entries) {
-        final key = entry.key;
-        final value = entry.value;
-        List<dynamic> list;
+      _attachFiles(formData, files);
 
-        if (value is File || value is PlatformFile) {
-          list = [value];
-        } else if (value is List) {
-          list = value;
-        } else {
-          print("⚠️ Invalid file type for key '$key'");
-          list = [];
-        }
-
-        for (final item in list) {
-          try {
-            if (item is PlatformFile) {
-              final mime = lookupMimeType(item.name) ?? 'application/octet-stream';
-              final contentType = MediaType.parse(mime);
-
-              if (kIsWeb && item.bytes != null) {
-                request.files.add(
-                  http.MultipartFile.fromBytes(
-                    key,
-                    item.bytes!,
-                    filename: item.name,
-                    contentType: contentType,
-                  ),
-                );
-              } else if (!kIsWeb && item.path != null) {
-                request.files.add(
-                  await http.MultipartFile.fromPath(
-                    key,
-                    item.path!,
-                    filename: item.name,
-                    contentType: contentType,
-                  ),
-                );
-              }
-            }
-
-            if (item is File) {
-              final filename = item.path.split('/').last;
-              final mime = lookupMimeType(filename) ?? 'application/octet-stream';
-              final contentType = MediaType.parse(mime);
-
-              request.files.add(
-                await http.MultipartFile.fromPath(
-                  key,
-                  item.path,
-                  filename: filename,
-                  contentType: contentType,
-                ),
-              );
-            }
-          } catch (e, s) {
-            print("❌ FILE ERROR for key '$key': $e");
-            print("STACK: $s");
-          }
-        }
-      }
-
-      // -------- SEND REQUEST --------
-      final streamed = await request.send();
-      final resp = await http.Response.fromStream(streamed);
-
-      print("📌 RESPONSE STATUS: ${resp.statusCode}");
-      print("📌 RESPONSE BODY: ${resp.body}");
-
-      return _handleResponse(resp);
-    } catch (e, s) {
-      print("❌ GLOBAL ERROR in putWithFilesAdvanced()");
-      print("ERROR: $e");
-      print("STACK: $s");
-      throw Exception("Upload failed: $e");
+      final response = await _dio.post(
+        endpoint ?? '',
+        data: formData,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      return _handleDioError(e);
     }
   }
 
-  // ------------ Private Method ------------
-  dynamic _handleResponse(http.Response response) {
-    debugPrint('Handling response → ${response.statusCode}');
-    debugPrint('Response Body → ${response.body}');
-
+  // ------------------ PUT WITH FILES ------------------
+  Future<dynamic> putWithFiles({
+    String? endpoint,
+    Map<String, dynamic>? fields,
+    Map<String, dynamic>? files,
+  }) async {
     try {
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        try {
-          final decoded = json.decode(response.body);
-          debugPrint('Success → Parsed JSON');
-        return {
-            "status": 1,
-            "data": decoded
-          };
-        } on FormatException catch (e) {
-          debugPrint('JSON Decode Error → $e');
-          return {
-            "status": 0,
-            "message": "Invalid response format from server."
-          };
+      final formData = FormData();
+
+      print("this is a files$files");
+      fields?.forEach((k, v) {
+        if (v != null) {
+          formData.fields.add(MapEntry(k, v.toString()));
+        }
+      });
+
+      _attachFiles(formData, files);
+
+      final response = await _dio.put(
+        endpoint ?? '',
+        data: formData,
+      );
+      return _handleResponse(response);
+    } catch (e) {
+      print("profile error :${e.toString()}");
+      return _handleDioError(e);
+    }
+  }
+
+  // ------------------ FILE HELPER ------------------
+  void _attachFiles(FormData formData, Map<String, dynamic>? files) {
+    if (files == null) return;
+
+    files.forEach((key, value) {
+      if (value == null) return;
+
+      final list = value is List ? value : [value];
+
+      for (final item in list) {
+        // FIX: Handle standard dart:io File objects
+        if (item is File) {
+          final path = item.path;
+          final fileName = path.split('/').last;
+          final mime = lookupMimeType(path) ?? 'image/jpeg';
+
+          formData.files.add(
+            MapEntry(
+              key,
+              MultipartFile.fromFileSync(
+                path,
+                filename: fileName,
+                contentType: MediaType.parse(mime),
+              ),
+            ),
+          );
+        }
+        // Keep existing PlatformFile support
+        else if (item is PlatformFile) {
+          final mime = lookupMimeType(item.name) ?? 'application/octet-stream';
+
+          if (kIsWeb && item.bytes != null) {
+            formData.files.add(
+              MapEntry(
+                key,
+                MultipartFile.fromBytes(
+                  item.bytes!,
+                  filename: item.name,
+                  contentType: MediaType.parse(mime),
+                ),
+              ),
+            );
+          } else if (!kIsWeb && item.path != null) {
+            formData.files.add(
+              MapEntry(
+                key,
+                MultipartFile.fromFileSync(
+                  item.path!,
+                  filename: item.name,
+                  contentType: MediaType.parse(mime),
+                ),
+              ),
+            );
+          }
         }
       }
+    });
+  }
 
-      else if (response.statusCode == 422) {
-        try {
-          final decoded = json.decode(response.body);
-          final errorMsg = decoded is Map && decoded.containsKey("errors")
-              ? decoded['errors'].values.first[0]
-              : "Validation error occurred.";
-          debugPrint('Validation Error (422) → $errorMsg');
-          return {"status": 0, "message": decoded};
-        } catch (e) {
-          debugPrint('422 Decode Failed → $e');
-          return {"status": 0, "message": "Invalid 422 response format."};
-        }
-      }
+  // ------------------ RESPONSE HANDLER ------------------
+// Inside api_client.dart
 
-      else if (response.statusCode == 401) {
-        debugPrint('Unauthorized (401)');
-        try {
-          final decoded = json.decode(response.body);
-          final msg = decoded is Map && decoded.containsKey("detail")
-              ? decoded['detail']
-              : "Unauthenticated. Please log in again.";
-          return {"status": 2, "message": msg};
-        } catch (e) {
-          return {"status": 2, "message": "Unauthenticated. Please log in again."};
-        }
-      }
+  dynamic _handleResponse(Response response) {
+    final status = response.statusCode ?? 0;
+    final responseData = response.data;
 
-      else if (response.statusCode == 500) {
-        debugPrint('Server Error (500)');
-        return {"status": 0, "message": "Internal server error. Please try again later."};
-      }
-
-      else if (response.statusCode == 400) {
-        final decoded = json.decode(response.body);
-        debugPrint('Bad Request(400)');
-        return {"status": 0, "message": decoded};
-      }
-
-      else if (response.statusCode == 404) {
-        debugPrint('Not Found (404)');
-        return {"status": 0, "message": "Requested resource not found."};
-      }
-
-      else if (response.statusCode == 403) {
-        debugPrint('Forbidden (403)');
-        return {"status": 0, "message": "You don't have permission to access this resource."};
-      }
-
-      else {
-        debugPrint('Unexpected Status → ${response.statusCode}');
-        return {
-          "status": 0,
-          "message": "Unexpected error (${response.statusCode}): ${response.reasonPhrase}",
-          "body": response.body,
-        };
-      }
-    } catch (e, stackTrace) {
-      debugPrint('FATAL in _handleResponse → $e\n$stackTrace');
+    // 1. Success (200 - 299)
+    if (status >= 200 && status < 300) {
       return {
-        "status": 0,
-        "message": "An unexpected error occurred while handling the response.",
+        "status": 1,
+        "message": responseData['message'] ?? "Success", // Extract success message
+        "data": responseData,
       };
     }
+
+    // 2. Unauthenticated
+    if (status == 401) {
+      return {
+        "status": 2,
+        "message": "Session expired. Please login again.",
+      };
+    }
+
+    // 3. Errors (400, 422, 500, etc.)
+    // Often Laravel errors are in responseData['message']
+    return {
+      "status": 0,
+      "message": responseData is Map ? (responseData['message'] ?? "Something went wrong") : "Unexpected error",
+    };
+  }
+
+  // ------------------ ERROR HANDLER ------------------
+  dynamic _handleDioError(dynamic error) {
+    if (error is DioException) {
+      final response = error.response;
+      return {
+        "status": 0,
+        "message": response?.data ?? error.message,
+      };
+    }
+
+    return {
+      "status": 0,
+      "message": "Unexpected error occurred",
+    };
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
+import 'package:village/screens/galllery/ui/gallery_screen_view.dart';
 
 import '../../../config/theme.dart';
 import '../notifier/gallery_notifier.dart';
@@ -27,7 +29,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppTheme.ssjsSecondaryBlue,
+        backgroundColor: AppTheme.backgroundWhite,
         title: const Text('Gallery'),
       ),
       body: SafeArea(
@@ -65,7 +67,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
             ? gallery.imagePathsurls.first
             : '';
 
-        return _buildGalleryItem(context, gallery.imagePathsurls, imageUrl, gallery.title);
+        return _buildGalleryItem(context, gallery.imagePathsurls, gallery.videoPathsurls, imageUrl, gallery.title);
       },
 
     );
@@ -74,11 +76,19 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   Widget _buildGalleryItem(
       BuildContext context,
       List<String> images,
+      List<String> videos,
       String imageUrl,
       String name, // This is your title
       ) {
     return InkWell(
-      onTap: () => _showImageSlider(context, images),
+      // onTap: () => _showImageSlider(context, images),
+      onTap: (){
+        navigator?.push(
+          MaterialPageRoute(
+            builder: (context) => ImagesScreenView(images: images, videos: videos, title: name,),
+          ),
+        );
+      },
       child: Container(
         decoration: BoxDecoration(
           color: AppTheme.backgroundGrey,

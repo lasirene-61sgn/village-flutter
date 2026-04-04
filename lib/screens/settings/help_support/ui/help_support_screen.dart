@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:village/screens/settings/help_support/notifier/settings_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../config/theme.dart';
@@ -70,7 +71,7 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
               context,
               icon: Icons.email,
               title: 'Email Support',
-              subtitle: 'support@shreesirohi.com',
+              subtitle: 'support@srjt.com',
               onTap: () {
                 _showContactDialog(context, 'Email', 'support@shreesirohi.com');
               },
@@ -378,19 +379,33 @@ class _HelpSupportScreenState extends ConsumerState<HelpSupportScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context), // Just pop
+            onPressed: () {
+              // 1. Drop the keyboard focus
+              FocusManager.instance.primaryFocus?.unfocus();
+              Navigator.pop(context);
+            },
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
-              final text = feedbackController.text;
-              Navigator.pop(context);
-              // Handle feedback text here
+            onPressed: () async {
+              // 1. Drop the keyboard focus
+              FocusManager.instance.primaryFocus?.unfocus();
+
+              // 2. Give Flutter 50 milliseconds to process the focus change
+              await Future.delayed(const Duration(milliseconds: 50));
+
+              // 3. Perform your logic (clear controllers, save data, etc.)
+              feedbackController.clear();
+
+              // 4. Safely close the dialog
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
             },
             child: const Text('Submit'),
           ),
         ],
       ),
-    ).then((_) => feedbackController.dispose()); // Dispose here!
+    ).then((_) => feedbackController.dispose());
   }
 }

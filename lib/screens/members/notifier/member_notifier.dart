@@ -2,21 +2,20 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:village/services/api/api_client/api_client.dart';
-import 'package:village/services/api/repo/repo.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:village/screens/members/model/member_model.dart';
 
 /// ======================
 /// STATE
 /// ======================
-// Update in member_notifier.dart
+// Update in staff_notifier.dart
 
 class MembersState {
   final bool isLoading;
   final List<Member> allMembers;
-  final List<Member> membersList;
-  final List<Member> filteredList; // Add this to hold the viewable list
+  final List<Village> membersList;
+  final List<Village> filteredList; // Add this to hold the viewable list
   final String? error;
 
   const MembersState({
@@ -30,8 +29,8 @@ class MembersState {
   MembersState copyWith({
     bool? isLoading,
     List<Member>? allMembers,
-    List<Member>? membersList,
-    List<Member>? filteredList,
+    List<Village>? membersList,
+    List<Village>? filteredList,
     String? error,
   }) {
     return MembersState(
@@ -50,35 +49,42 @@ class MembersNotifier extends StateNotifier<MembersState> {
   Future<void> loadMembers(String url) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final response = await ApiClient().get(url);
+      final response = await ApiClient().get(endpoint: url);
       if (response["status"] == 1) {
         final dynamic rawData = response['data']?['data'];
+        print("member list: $rawData");
         if (rawData is List) {
-          final members = rawData.map((e) => Member.fromJson(e)).toList();
+          final members = rawData.map((e) => Village.fromJson(e)).toList();
+
+          final allMembers = members
+              .expand((v) => v.customers)
+              .toList();
+
           state = state.copyWith(
               isLoading: false,
-              allMembers: members,
+              allMembers: allMembers,
               membersList: members,
               filteredList: members
           );
         }
       }
     } catch (e) {
+      print(e.toString());
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
-  void filterByField(String fieldName, String value) {
-    final results = state.allMembers.where((m) {
-      switch (fieldName) {
-        case 'Gotra': return m.gotra == value;
-        case 'Area': return m.area == value;
-        case 'Street/Road': return m.streetRoad == value;
-        case 'Pincode': return m.pincode == value;
-        default: return true;
-      }
-    }).toList();
-    state = state.copyWith(membersList: results);
-  }
+  // void filterByField(String fieldName, String value) {
+  //   final results = state.allMembers.where((m) {
+  //     switch (fieldName) {
+  //       case 'Gotra': return m.gotra == value;
+  //       case 'Area': return m.area == value;
+  //       case 'Street/Road': return m.streetRoad == value;
+  //       case 'Pincode': return m.pincode == value;
+  //       default: return true;
+  //     }
+  //   }).toList();
+  //   state = state.copyWith(membersList: results);
+  // }
 
   // Method to reset filter
   void resetFilter() {
@@ -91,7 +97,7 @@ class MembersNotifier extends StateNotifier<MembersState> {
 // /// ======================
 // class MembersNotifier extends StateNotifier<MembersState> {
 //   MembersNotifier() : super(const MembersState());
-//   // inside MembersNotifier class in member_notifier.dart
+//   // inside MembersNotifier class in staff_notifier.dart
 //   Future<void> loadMembers(String url) async {
 //     state = state.copyWith(isLoading: true, error: null);
 //     try {

@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:village/screens/business/model/business_model.dart';
 import 'package:village/screens/business/model/category_model.dart';
 import 'package:village/services/api/api_client/api_client.dart';
-import 'package:village/services/api/repo/repo.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
 /// ======================
@@ -60,7 +59,7 @@ class BusinessNotifier extends StateNotifier<BusinessState> {
     );
 
     try {
-      final response = await ApiClient().get(url);
+      final response = await ApiClient().get(endpoint: url);
 
       if (response["status"] == 1) {
         final dynamic rawData = response['data']?['data'];
@@ -99,7 +98,7 @@ class BusinessNotifier extends StateNotifier<BusinessState> {
     );
 
     try {
-      final response = await ApiClient().get(url);
+      final response = await ApiClient().get(endpoint: url);
 
       if (response["status"] == 1) {
         final dynamic rawData = response['data']?['data'];

@@ -1,13 +1,11 @@
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:village/screens/profile/model/family_member_model.dart';
 import 'package:village/screens/profile/model/profile_model.dart';
 import 'package:village/services/api/api_client/api_client.dart';
-import 'package:village/services/api/repo/repo.dart';
-import 'package:flutter_riverpod/legacy.dart';
-
-import 'package:village/screens/events/model/event_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:village/services/widget/custom_msg.dart';
 
 class ProfileState {
   final bool isLoading;
@@ -60,11 +58,11 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final response = await ApiClient().get('api/customer/profile');
+      final response = await ApiClient().get(endpoint: 'api/customer/profile');
 
       if (response['status'] == 1 && response['data']?['data'] != null) {
         final profile = Profile.fromJson(response['data']?['data']);
-
+        print("User Profile: ${response['data']?['data']}");
         state = state.copyWith(
           isLoading: false,
           isLoaded: true,
@@ -86,11 +84,114 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
       );
     }
   }
+  Future<void> addFamily(
+      BuildContext context,
+      File? profileImage,
+      Map<String, dynamic> payload) async {
+
+    // 1. Set loading state
+    state = state.copyWith(isSaving: true, error: null);
+
+    try {
+      final response = await ApiClient().postWithFiles(
+        endpoint: 'api/customer/family-members',
+        fields: payload,
+        files: {
+          if (profileImage != null) 'image': profileImage,
+        },
+      );
+
+      print("Add Family Response: $response");
+
+      // 2. Check for success (status 1 from ApiClient)
+      if (response['status'] == 1) {
+        // Refresh the list
+        await loadMember();
+
+        // Update state
+        state = state.copyWith(isSaving: false, error: null);
+
+        // 3. Extract message from nested data
+        final String msg = response['data']?['message']?.toString() ??
+            response['message']?.toString() ??
+            "Member added successfully";
+
+        Toaster.showSuccess(msg);
+
+        // 4. Safety check before popping the screen
+        if (context.mounted) {
+          Navigator.pop(context);
+        }
+      } else {
+        // 5. Handle failure (validation errors, etc.)
+        state = state.copyWith(isSaving: false);
+        Toaster.showError(response['message']?.toString() ?? "Failed to add member");
+      }
+    } catch (e) {
+      // 6. Handle exceptions
+      debugPrint("ADD FAMILY ERROR: $e");
+      state = state.copyWith(
+          isSaving: false,
+          error: e.toString()
+      );
+      Toaster.showError("An unexpected error occurred");
+    }
+  }
+  Future<void> updateFamily(
+      BuildContext context,
+      String memberId,
+      File? profileImage,
+      Map<String, dynamic> payload) async {
+
+    state = state.copyWith(isSaving: true, error: null);
+
+    try {
+
+      final response = await ApiClient().postWithFiles( // Use POST instead of PUT
+        endpoint: 'api/customer/family-members/$memberId',
+        fields: payload,
+        files: {
+          if (profileImage != null) 'image': profileImage,
+        },
+      );
+
+      print("Update Response: $response");
+
+      // 1. Check status 1 (Success from your ApiClient wrapper)
+      if (response['status'] == 1) {
+        // 2. Refresh the list in the background
+        await loadMember();
+
+        state = state.copyWith(isSaving: false, error: null);
+
+        // 3. Extract the success message properly
+        // Looks for data -> message first, then falls back to outer message
+        String msg = response['data']?['message']?.toString() ??
+            response['message']?.toString() ??
+            "Updated successfully";
+
+        Toaster.showSuccess(msg);
+
+        // 4. Return to previous screen
+        if (context.mounted) {
+          Navigator.pop(context);
+        }
+      } else {
+        // Handle logic errors (e.g., validation failed)
+        state = state.copyWith(isSaving: false);
+        Toaster.showError(response['message']?.toString() ?? "Failed to update");
+      }
+    } catch (e) {
+      debugPrint("UPDATE FAMILY ERROR: $e");
+      state = state.copyWith(isSaving: false, error: e.toString());
+      Toaster.showError("An unexpected error occurred");
+    }
+  }
   Future<void> loadMember() async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final response = await ApiClient().get('api/customer/family-members/');
+      final response = await ApiClient().get(endpoint: 'api/customer/family-members/');
 
       // Check if data is a List
       if (response['status'] == 1 && response['data']?['data'] != null) {
@@ -112,121 +213,39 @@ class ProfileNotifier extends StateNotifier<ProfileState> {
     }
   }
 
-  /// ======================
-  /// CREATE / UPDATE PROFILE
-  /// ======================
   Future<void> submitProfile(
       BuildContext context,
-      Map<String,dynamic> payload) async {
+      Map<String, dynamic> payload,
+      File? profileImage,
+      ) async {
     state = state.copyWith(isSaving: true, error: null);
 
     try {
-
-      dynamic response =   ApiClient().put(
-        url:'api/customer/profile',
-        map: payload,
+      // Note: Ensure you use the same instance of Dio if possible,
+      // but calling ApiClient() works if it initializes correctly.
+      final response = await ApiClient().postWithFiles(
+        endpoint: 'api/customer/profile',
+        fields: payload,
+        files: {
+          if (profileImage != null) 'image': profileImage, // This is now handled
+        },
       );
 
-
-      if (response['status'] == 1) {
+      // Your logic to check 'status' from your _handleResponse wrapper
+      if (response["status"] == 1) {
         await loadProfile();
         state = state.copyWith(isSaving: false, error: null);
+        Toaster.showSuccess(response["message"] ?? "Updated Successfully");
+       Get.back();
       } else {
-        throw Exception('Profile save failed');
+        state = state.copyWith(isSaving: false);
+        Toaster.showError(response['message'].toString());
       }
     } catch (e) {
-      state = state.copyWith(
-        isSaving: false,
-        error: 'Failed to save profile',
-      );
-    } finally {
-      state = state.copyWith(isSaving: false);
-    }
-  }
-Future<void> addFamily(
-      BuildContext context,
-      Map<String,dynamic> payload) async {
-    state = state.copyWith(isSaving: true, error: null);
-
-    try {
-
-      dynamic response =   ApiClient().post(
-        url:'api/customer/family-members',
-        map: payload,
-      );
-
-
-      if (response['status'] == 1) {
-       await loadMember();
-        state = state.copyWith(isSaving: false, error: null);
-      } else {
-        throw Exception('Profile save failed');
-      }
-    } catch (e) {
-      state = state.copyWith(
-        isSaving: false,
-        error: 'Failed to save profile',
-      );
-    } finally {
-      state = state.copyWith(isSaving: false);
+      state = state.copyWith(isSaving: false, error: e.toString());
     }
   }
 
-  Future<void> updateFamily(
-      BuildContext context,
-      String memberId,
-      Map<String, dynamic> payload) async {
-
-    state = state.copyWith(isSaving: true, error: null);
-
-    try {
-      // Typically PUT requests for specific items include the ID in the URL
-      // e.g., api/customer/family-members/1
-      final response = await ApiClient().put(
-        url: 'api/customer/family-members/$memberId',
-        map: payload,
-      );
-
-      if (response != null && response['status'] == 1) {
-        await loadMember();
-        state = state.copyWith(isSaving: false, error: null);
-
-      } else {
-        throw Exception(response['message'] ?? 'Update failed');
-      }
-    } catch (e) {
-      debugPrint("UPDATE FAMILY ERROR: $e");
-      state = state.copyWith(
-          isSaving: false,
-          error: 'Failed to update family member'
-      );
-    } finally {
-      state = state.copyWith(isSaving: false);
-    }
-  }
-  Future<void> loadProfileDetails(String id) async {
-    state = state.copyWith(isSaving: true, error: null);
-
-    try {
-      final response = await Repo().adminDetails(id);
-
-      if (response['data'] != null) {
-        final profile = Profile.fromJson(response['data']);
-
-        state = state.copyWith(
-          isSaving: false,
-          selectedProfile: profile,
-        );
-      } else {
-        throw Exception('No profile data');
-      }
-    } catch (e) {
-      state = state.copyWith(
-        isSaving: false,
-        error: 'Failed to load profile details',
-      );
-    }
-  }
 }
 
 
