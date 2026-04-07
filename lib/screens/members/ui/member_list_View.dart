@@ -77,7 +77,7 @@ class _MembersListScreenState extends ConsumerState<MembersListScreen> {
 
     // 2. Filter the members list based on Name OR Mobile
     final filteredMembers = widget.members.where((member) {
-      final nameLower = member.name.toLowerCase();
+      final nameLower = member.labelName?.toLowerCase() ??member.name.toLowerCase();
       final mobileString = member.mobile.toString(); // Ensure mobile is a string
 
       return nameLower.contains(query) || mobileString.contains(query);
@@ -119,7 +119,7 @@ class _MembersListScreenState extends ConsumerState<MembersListScreen> {
             const SizedBox(width: 16),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(member.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(member.labelName ?? member.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                 // Text(member.mobile, style: const TextStyle(color: Colors.grey)),
                 Text(member.mobile.toString(), style: const TextStyle(color: Colors.grey)),
               ]),

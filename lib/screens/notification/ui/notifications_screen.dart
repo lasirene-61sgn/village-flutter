@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:village/screens/dashboard/notifier/dashboard_notifier.dart';
-import 'package:village/screens/notification/notifier/notification_notifier.dart';
+// import 'package:village/screens/notification/notifier/notification_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../config/theme.dart';

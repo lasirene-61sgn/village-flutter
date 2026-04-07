@@ -54,8 +54,11 @@ class MembersNotifier extends StateNotifier<MembersState> {
         final dynamic rawData = response['data']?['data'];
         print("member list: $rawData");
         if (rawData is List) {
-          final members = rawData.map((e) => Village.fromJson(e)).toList();
-
+          // final members = rawData.map((e) => Village.fromJson(e)).toList();
+          final members = rawData
+              .map((e) => Village.fromJson(e))
+              .where((v) => v.customers.isNotEmpty)
+              .toList();
           final allMembers = members
               .expand((v) => v.customers)
               .toList();

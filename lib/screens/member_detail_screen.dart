@@ -70,7 +70,7 @@ class MemberDetailScreen extends StatelessWidget {
               /// ---------------- PERSONAL ----------------
               _section(context, 'Personal Information', [
                 if (member.name.isNotEmpty)
-                  _row('Name', member.name, Icons.person),
+                  _row('Name', "${member.name} ji", Icons.person),
                 if (member.labelName != null)
                   _row('Label Name', member.labelName!, Icons.perm_identity),
                 if (member.fatherName != null)
@@ -126,7 +126,7 @@ class MemberDetailScreen extends StatelessWidget {
               //     if (member.officeAddress != null)
               //       _row('Office Address', member.officeAddress!, Icons.location_on),
               //   ]),
-              _section(context, 'Contact Information', [
+            if(member.mobile.isNotEmpty || (member.whatsapp != null && member.whatsapp!.isNotEmpty))  _section(context, 'Contact Information', [
                 // Mobile Launcher
                 if (member.mobile.isNotEmpty)
                   _row(
