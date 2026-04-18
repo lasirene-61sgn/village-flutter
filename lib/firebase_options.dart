@@ -8,7 +8,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError('iOS not configured');
+        return ios;
       default:
         throw UnsupportedError('Platform not supported');
     }
@@ -20,5 +20,14 @@ class DefaultFirebaseOptions {
     messagingSenderId: '992878145244', // Found in google-services.json -> project_number
     projectId: 'jalore-d7dc0',       // Found in google-services.json -> project_id
     storageBucket: 'jalore-d7dc0.firebasestorage.app',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'dummy-api-key',
+    appId: '1:992878145244:ios:dummy',
+    messagingSenderId: '992878145244',
+    projectId: 'jalore-d7dc0',
+    storageBucket: 'jalore-d7dc0.firebasestorage.app',
+    iosBundleId: 'com.srjt.chennai',
   );
 }

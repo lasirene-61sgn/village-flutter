@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:io';
 
 class NotificationService {
   static final _messaging = FirebaseMessaging.instance;
@@ -15,15 +16,18 @@ class NotificationService {
 
   static Future<void> init() async {
     // 1. Request Permissions (Crucial for Android 13+)
-    await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    if (!Platform.isIOS) {
+      await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
 
     // 2. Initialize Local Notifications
     const initializationSettings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: DarwinInitializationSettings(),
     );
 
     await _localNotifications.initialize(
@@ -40,16 +44,19 @@ class NotificationService {
         ?.createNotificationChannel(_channel);
 
     // 4. Set Foreground Presentation Options
-    await _messaging.setForegroundNotificationPresentationOptions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    if (!Platform.isIOS) {
+      await _messaging.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
 
     _setupMessageHandlers();
   }
 
   static void _setupMessageHandlers() {
+    if (Platform.isIOS) return;
     // STATE: FOREGROUND
     FirebaseMessaging.onMessage.listen((message) {
       final notification = message.notification;
@@ -86,5 +93,8 @@ class NotificationService {
     });
   }
 
-  static Future<String?> getToken() async => await _messaging.getToken();
+  static Future<String?> getToken() async {
+    if (Platform.isIOS) return null;
+    return await _messaging.getToken();
+  }
 }

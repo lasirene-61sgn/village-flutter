@@ -3,6 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:village/config/theme.dart';
 import 'package:village/firebase_options.dart';
+import 'dart:io';
 import 'package:village/services/local_storage/shared_preference.dart';
 import 'package:village/services/network_service/network_error_screen.dart';
 import 'package:village/services/network_service/network_notifier.dart';
@@ -14,21 +15,32 @@ import 'services/api/notification_service/notifiction_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  if (Platform.isIOS) return;
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    print("Firebase background initialization failed: $e");
+  }
   print("Handling background message: ${message.messageId}");
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  if (!Platform.isIOS) {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    } catch (e) {
+      print("Firebase initialization failed: $e");
+    }
 
-  // Register background handler
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    // Register background handler
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  }
 
   await NotificationService.init();
   await SharedPreferencesHelper().init();
@@ -43,10 +55,11 @@ void main() async {
   }
 
 
-  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-  if (initialMessage != null) {
-    print("App launched from terminated state via notification");
-    // You can handle redirection logic here or inside NotificationService
+  if (!Platform.isIOS) {
+    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      print("App launched from terminated state via notification");
+    }
   }
 
   runApp(const ProviderScope(child: MyApp()));
