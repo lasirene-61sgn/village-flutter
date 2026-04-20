@@ -70,7 +70,7 @@ class MemberDetailScreen extends StatelessWidget {
               /// ---------------- PERSONAL ----------------
               _section(context, 'Personal Information', [
                 if (member.name.isNotEmpty)
-                  _row('Name', "${member.name} ji", Icons.person),
+                  _row('Name', member.name, Icons.person),
                 if (member.labelName != null)
                   _row('Label Name', member.labelName!, Icons.perm_identity),
                 if (member.fatherName != null)
