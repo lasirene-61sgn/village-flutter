@@ -168,19 +168,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         // family detail screen root way  now not allow for a village client then we want family uncomment this only auto get fully
 
 
-                        // _buildProfileOption(
-                        //   context,
-                        //   icon: Icons.family_restroom,
-                        //   title: 'Family Details',
-                        //   onTap: () {
-                        //     Navigator.push(
-                        //       context,
-                        //       MaterialPageRoute(
-                        //         builder: (context) => const FamilyDetailsScreen(),
-                        //       ),
-                        //     );
-                        //   },
-                        // ),
+                        _buildProfileOption(
+                          context,
+                          icon: Icons.family_restroom,
+                          title: 'Family Details',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const FamilyDetailsScreen(),
+                              ),
+                            );
+                          },
+                        ),
 
 
                         // _buildProfileOption(

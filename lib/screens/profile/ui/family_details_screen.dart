@@ -20,7 +20,6 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    // Load data from API when screen opens
     Future.microtask(() {
       ref.read(profileNotifierProvider.notifier).loadMember();
     });
@@ -32,7 +31,6 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
       builder: (context) => _AddFamilyMemberDialog(
         onAdd: (memberPayload, imageFile) async {
           await ref.read(profileNotifierProvider.notifier).addFamily(context,imageFile, memberPayload,);
-          // Refresh list after adding
           ref.read(profileNotifierProvider.notifier).loadMember();
         },
       ),
@@ -43,7 +41,6 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
     showDialog(
       context: context,
       builder: (context) => _AddFamilyMemberDialog(
-        // Pass the model's current data to the dialog
         initialData: member.toJson(),
         onAdd: (memberPayload,f) async {
           await ref.read(profileNotifierProvider.notifier).updateFamily(
@@ -59,13 +56,11 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // WATCH the state here. When state change in Notifier, this UI rebuilds.
     final profileState = ref.watch(profileNotifierProvider);
     final familyMembers = profileState.familyMember ?? [];
 
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: AppBar(
         automaticallyImplyLeading: true,
         title: const Text('Family Details'),
@@ -86,13 +81,13 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
             ? _buildEmptyState()
             : ListView.builder(
           itemCount: familyMembers.length,
-          padding: const EdgeInsets.symmetric(vertical: 12), // Added padding top/bottom
+          padding: const EdgeInsets.symmetric(vertical: 12),
           itemBuilder: (context, index) {
             final member = familyMembers[index];
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: InkWell(
-                borderRadius: BorderRadius.circular(16), // Match card corners
+                borderRadius: BorderRadius.circular(16),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -105,7 +100,6 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    // Suble border instead of heavy shadow
                     border: Border.all(color: Colors.grey.withOpacity(0.15), width: 1),
                     boxShadow: [
                       BoxShadow(
@@ -119,7 +113,6 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     child: Row(
                       children: [
-                        // Clean Avatar Section
                         Container(
                           width: 54,
                           height: 54,
@@ -142,8 +135,6 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
                           ),
                         ),
                         const SizedBox(width: 16),
-
-                        // Text Content Section
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -169,8 +160,6 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
                             ],
                           ),
                         ),
-
-                        // Actions Section
                         Container(
                           decoration: BoxDecoration(
                             color: AppTheme.primaryBlue.withOpacity(0.05),
@@ -202,7 +191,7 @@ class _FamilyDetailsScreenState extends ConsumerState<FamilyDetailsScreen> {
     return Container(
       color: AppTheme.primaryBlue,
       child: Icon(
-        _getRelationIcon(member.relationship), // Ensure this matches your model field
+        _getRelationIcon(member.relationship),
         color: Colors.white,
         size: 24,
       ),
@@ -249,7 +238,6 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
 
-  // TEXT CONTROLLERS
   late TextEditingController _nameController;
   late TextEditingController _relationController;
   late TextEditingController _mobileController;
@@ -261,13 +249,11 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
   late TextEditingController _nativePlaceController;
   late TextEditingController _notesController;
 
-  // DATE
-  DateTime? _selectedDob;
-  DateTime? _selectedAnniversary;
+  // DATE VARIABLES COMMENTED
+  // DateTime? _selectedDob;
+  // DateTime? _selectedAnniversary;
 
-  // IMAGE
   File? _selectedImage;
-
   String _selectedGender = 'male';
   bool _isMatrimony = false;
 
@@ -289,48 +275,36 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
     _selectedGender = widget.initialData?['gender'] ?? 'male';
     _isMatrimony = widget.initialData?['matrimony'] ?? false;
 
-    if (widget.initialData?['date_of_birth'] != null) {
-      _selectedDob = DateTime.tryParse(widget.initialData!['date_of_birth']);
-    }
-    if (widget.initialData?['anniversary_date'] != null) {
-      _selectedAnniversary = DateTime.tryParse(widget.initialData!['anniversary_date']);
-    }
+    // DATE LOADING LOGIC COMMENTED
+    // if (widget.initialData?['date_of_birth'] != null) {
+    //   _selectedDob = DateTime.tryParse(widget.initialData!['date_of_birth']);
+    // }
+    // if (widget.initialData?['anniversary_date'] != null) {
+    //   _selectedAnniversary = DateTime.tryParse(widget.initialData!['anniversary_date']);
+    // }
   }
 
   @override
   void dispose() {
     for (var c in [
-      _nameController,
-      _relationController,
-      _mobileController,
-      _gotraController,
-      _occupationController,
-      _educationController,
-      _bloodGroupController,
-      _hobbiesController,
-      _nativePlaceController,
-      _notesController,
+      _nameController, _relationController, _mobileController, _gotraController,
+      _occupationController, _educationController, _bloodGroupController,
+      _hobbiesController, _nativePlaceController, _notesController,
     ]) {
       c.dispose();
     }
     super.dispose();
   }
 
-  // IMAGE PICKER
   Future<void> _pickImage(ImageSource source) async {
-    final XFile? picked = await _picker.pickImage(
-      source: source,
-      imageQuality: 80,
-    );
-
+    final XFile? picked = await _picker.pickImage(source: source, imageQuality: 80);
     if (picked != null) {
-      setState(() {
-        _selectedImage = File(picked.path);
-      });
+      setState(() { _selectedImage = File(picked.path); });
     }
   }
 
-  // DATE PICKER
+  // DATE PICKER LOGIC COMMENTED
+  /*
   Future<void> _selectDate(bool isDob) async {
     final picked = await showDatePicker(
       context: context,
@@ -344,6 +318,7 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
       });
     }
   }
+  */
 
   String _formatDate(DateTime? d) =>
       d == null ? 'Select Date' : DateFormat('dd MMM yyyy').format(d);
@@ -360,29 +335,23 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-
-              // 🔥 IMAGE PICKER UI
               GestureDetector(
                 onTap: () => _showImageSourceSheet(),
                 child: CircleAvatar(
                   radius: 45,
                   backgroundColor: Colors.grey.shade300,
-                  backgroundImage: _selectedImage != null
-                      ? FileImage(_selectedImage!)
-                      : null,
-                  child: _selectedImage == null
-                      ? const Icon(Icons.camera_alt, size: 28)
-                      : null,
+                  backgroundImage: _selectedImage != null ? FileImage(_selectedImage!) : null,
+                  child: _selectedImage == null ? const Icon(Icons.camera_alt, size: 28) : null,
                 ),
               ),
               const SizedBox(height: 16),
-
               _buildField(_nameController, 'Name', Icons.person, isRequired: true),
               _buildField(_relationController, 'Relationship', Icons.family_restroom, isRequired: true),
               _buildField(_mobileController, 'Mobile', Icons.phone, keyboard: TextInputType.phone),
 
-              _dateTile('Date of Birth', true),
-              _dateTile('Anniversary Date', false),
+              // DATE TILES IN DIALOG COMMENTED
+              // _dateTile('Date of Birth', true),
+              // _dateTile('Anniversary Date', false),
 
               _buildField(_gotraController, 'Gotra', Icons.groups),
               _buildField(_educationController, 'Education', Icons.school),
@@ -401,7 +370,6 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
                   const Text("Female"),
                 ],
               ),
-
               CheckboxListTile(
                 title: const Text("Open for Matrimony"),
                 value: _isMatrimony,
@@ -421,8 +389,9 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
                 "name": _nameController.text,
                 "relationship": _relationController.text,
                 "mobile": _mobileController.text,
-                "date_of_birth": _apiDate(_selectedDob),
-                "anniversary_date": _apiDate(_selectedAnniversary),
+                // DATE API PAYLOAD COMMENTED
+                // "date_of_birth": _apiDate(_selectedDob),
+                // "anniversary_date": _apiDate(_selectedAnniversary),
                 "gotra": _gotraController.text,
                 "occupation": _occupationController.text,
                 "education": _educationController.text,
@@ -443,6 +412,7 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
     );
   }
 
+  /*
   Widget _dateTile(String label, bool isDob) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
@@ -452,28 +422,17 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
       onTap: () => _selectDate(isDob),
     );
   }
+  */
 
-  Widget _buildField(
-      TextEditingController controller,
-      String label,
-      IconData icon, {
-        bool isRequired = false,
-        TextInputType? keyboard,
-        int maxLines = 1,
-      }) {
+  Widget _buildField(TextEditingController controller, String label, IconData icon, {bool isRequired = false, TextInputType? keyboard, int maxLines = 1,}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: controller,
         keyboardType: keyboard,
         maxLines: maxLines,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon),
-          border: const OutlineInputBorder(),
-        ),
-        validator: (v) =>
-        isRequired && (v == null || v.isEmpty) ? 'Enter $label' : null,
+        decoration: InputDecoration(labelText: label, prefixIcon: Icon(icon), border: const OutlineInputBorder()),
+        validator: (v) => isRequired && (v == null || v.isEmpty) ? 'Enter $label' : null,
       ),
     );
   }
@@ -488,18 +447,12 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
             ListTile(
               leading: const Icon(Icons.camera_alt),
               title: const Text('Camera'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.camera);
-              },
+              onTap: () { Navigator.pop(context); _pickImage(ImageSource.camera); },
             ),
             ListTile(
               leading: const Icon(Icons.photo),
               title: const Text('Gallery'),
-              onTap: () {
-                Navigator.pop(context);
-                _pickImage(ImageSource.gallery);
-              },
+              onTap: () { Navigator.pop(context); _pickImage(ImageSource.gallery); },
             ),
           ],
         ),
@@ -507,38 +460,28 @@ class _AddFamilyMemberDialogState extends State<_AddFamilyMemberDialog> {
     );
   }
 }
+
 class FamilyMemberDetailScreen extends StatelessWidget {
   final FamilyMember member;
-
   const FamilyMemberDetailScreen({super.key, required this.member});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(member.name),
-        backgroundColor: AppTheme.ssjsSecondaryBlue,
-      ),
+      appBar: AppBar(title: Text(member.name), backgroundColor: AppTheme.ssjsSecondaryBlue),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Profile Header
             Center(
               child: CircleAvatar(
                 radius: 60,
                 backgroundColor: AppTheme.primaryBlue.withOpacity(0.1),
-                backgroundImage: (member.image != null && member.image!.isNotEmpty)
-                    ? NetworkImage(member.image!)
-                    : null,
-                child: (member.image == null || member.image!.isEmpty)
-                    ? const Icon(Icons.person, size: 60, color: AppTheme.primaryBlue)
-                    : null,
+                backgroundImage: (member.image != null && member.image!.isNotEmpty) ? NetworkImage(member.image!) : null,
+                child: (member.image == null || member.image!.isEmpty) ? const Icon(Icons.person, size: 60, color: AppTheme.primaryBlue) : null,
               ),
             ),
             const SizedBox(height: 24),
-
-            // Details Card
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -549,8 +492,11 @@ class FamilyMemberDetailScreen extends StatelessWidget {
                     _buildDetailRow('Relationship', member.relationship, Icons.family_restroom),
                     _buildDetailRow('Mobile', member.mobile, Icons.phone),
                     _buildDetailRow('Gender', member.gender, Icons.wc),
-                    _buildDetailRow('Date of Birth', member.dateOfBirth, Icons.cake),
-                    _buildDetailRow('Anniversary', member.anniversaryDate, Icons.favorite),
+
+                    // DETAIL ROWS FOR DATES COMMENTED
+                    // _buildDetailRow('Date of Birth', member.dateOfBirth, Icons.cake),
+                    // _buildDetailRow('Anniversary', member.anniversaryDate, Icons.favorite),
+
                     _buildDetailRow('Gotra', member.gotra, Icons.groups),
                     _buildDetailRow('Education', member.education, Icons.school),
                     _buildDetailRow('Occupation', member.occupation, Icons.work),
@@ -558,13 +504,6 @@ class FamilyMemberDetailScreen extends StatelessWidget {
                     _buildDetailRow('Native Place', member.nativePlace, Icons.home),
                     _buildDetailRow('Hobbies', member.hobbies, Icons.palette),
                     _buildDetailRow('Notes', member.notes, Icons.note),
-
-                    // Special case for Matrimony
-                    // if (member.matrimony == true)
-                    //   const ListTile(
-                    //     leading: Icon(Icons.star, color: Colors.orange),
-                    //     title: Text("Open for Matrimony", style: TextStyle(fontWeight: FontWeight.bold)),
-                    //   ),
                   ],
                 ),
               ),
@@ -575,13 +514,9 @@ class FamilyMemberDetailScreen extends StatelessWidget {
     );
   }
 
-  // 🔥 This helper method handles the "not empty / not null" logic
   Widget _buildDetailRow(String label, dynamic value, IconData icon) {
-    if (value == null || value.toString().trim().isEmpty) {
-      return const SizedBox.shrink(); // Returns nothing if empty
-    }
+    if (value == null || value.toString().trim().isEmpty) return const SizedBox.shrink();
 
-    // If the value is a DateTime, format it
     String displayValue = value.toString();
     if (value is DateTime) {
       displayValue = DateFormat('dd MMM yyyy').format(value);

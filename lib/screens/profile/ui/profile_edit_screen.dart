@@ -209,16 +209,19 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 // Basic Info
                 // Basic Info
                 TextFormField(
+                  readOnly: true,
                   controller: _nameController,
                   decoration: const InputDecoration(labelText: 'Name', prefixIcon: Icon(Icons.person)),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  readOnly: true,
                   controller: _labelController, // CHANGED
                   decoration: const InputDecoration(labelText: 'Label', prefixIcon: Icon(Icons.email)),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  readOnly: true,
                   controller: _fatherNameController,
                   decoration: const InputDecoration(labelText: 'Father Name', prefixIcon: Icon(Icons.person_outline)),
                 ),
@@ -230,6 +233,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  readOnly: true,
                   controller: _villageController, // CHANGED
                   decoration: const InputDecoration(labelText: 'Village', prefixIcon: Icon(Icons.wc)),
                 ),
@@ -287,7 +291,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _addressController, // HOME ADDRESS
-                  decoration: const InputDecoration(labelText: 'Address (Home)', prefixIcon: Icon(Icons.location_on)),
+                  decoration: const InputDecoration(labelText: 'Address', prefixIcon: Icon(Icons.location_on)),
                   maxLines: 2,
                 ),
                 const SizedBox(height: 16),

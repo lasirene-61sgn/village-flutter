@@ -70,27 +70,29 @@ class _MembersListScreenState extends ConsumerState<MembersListScreen> {
       ),
     );
   }
-
   Widget _buildBody() {
-    // 1. Get the search query and clean it
-    final query = _searchController.text.toLowerCase();
+    final query = _searchController.text.toLowerCase().trim(); // Added trim()
 
-    // 2. Filter the members list based on Name OR Mobile
     final filteredMembers = widget.members.where((member) {
-      final nameLower = member.labelName?.toLowerCase() ??member.name.toLowerCase();
-      final mobileString = member.mobile.toString(); // Ensure mobile is a string
+      // 1. Get lowercase versions of all searchable fields
+      final name = (member.labelName ?? member.name).toLowerCase();
+      final mobile = member.mobile.toString(); // Usually numbers, no case needed
 
-      return nameLower.contains(query) || mobileString.contains(query);
+      // 2. Safely get the streetRoad string
+      final street = (member.streetRoad ?? "").toString().toLowerCase();
+
+      // 3. Return true if any field contains the query
+      return name.contains(query) ||
+          mobile.contains(query) ||
+          street.contains(query);
     }).toList();
 
-    // 3. Handle Empty State
     if (filteredMembers.isEmpty) {
       return const Center(
         child: Text("No Members Found", style: TextStyle(color: Colors.grey)),
       );
     }
 
-    // 4. Return the filtered list
     return ListView.builder(
       itemCount: filteredMembers.length,
       itemBuilder: (context, index) => _buildMemberTile(filteredMembers[index]),

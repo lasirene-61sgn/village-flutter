@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:village/screens/commitie/model/commitie_model.dart';
 import 'package:village/screens/commitie/notifier/commitie_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -108,7 +109,7 @@ class _CommitteeScreenState extends ConsumerState<CommitteeScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                         textAlign: TextAlign.center,
-                        maxLines: 2,
+                        maxLines: 5,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -122,13 +123,28 @@ class _CommitteeScreenState extends ConsumerState<CommitteeScreen> {
                           const Icon(Icons.phone, size: 12, color: AppTheme.textGrey),
                           const SizedBox(width: 4),
                           Flexible(
-                            child: Text(
-                              member.phone,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppTheme.textGrey,
-                                    fontSize: 10,
-                                  ),
-                              overflow: TextOverflow.ellipsis,
+                            child: GestureDetector(
+                              onTap: () async {
+                                final Uri url = Uri.parse('tel:${member.phone}');
+
+                                try {
+                                  if (await canLaunchUrl(url)) {
+                                    await launchUrl(url);
+                                  } else {
+                                    debugPrint('Could not launch ${member.phone}');
+                                  }
+                                } catch (e) {
+                                  debugPrint('Error launching dialer: $e');
+                                }
+                              },
+                              child: Text(
+                                member.phone,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: AppTheme.textGrey,
+                                      fontSize: 10,
+                                    ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                         ],
