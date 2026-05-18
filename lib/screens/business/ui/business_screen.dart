@@ -487,7 +487,7 @@ class _BusinessScreenState extends ConsumerState<BusinessScreen> {
     final Uri uri = Uri(scheme: 'tel', path: phoneNumber);
 
     if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       throw 'Could not launch $phoneNumber';
     }

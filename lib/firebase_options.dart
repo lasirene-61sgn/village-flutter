@@ -23,11 +23,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'dummy-api-key',
-    appId: '1:992878145244:ios:dummy',
-    messagingSenderId: '992878145244',
-    projectId: 'jalore-d7dc0',
-    storageBucket: 'jalore-d7dc0.firebasestorage.app',
+    apiKey: 'AIzaSyCZIQYP2mi5za5g0P96JTJC389KMTosLRs',
+    appId: '1:1079245350998:ios:b274f520b99b414fd2b3f7',
+    messagingSenderId: '1079245350998',
+    projectId: 'test0-project-941b8',
+    storageBucket: 'test0-project-941b8.firebasestorage.app',
     iosBundleId: 'com.srjt.chennai',
   );
 }

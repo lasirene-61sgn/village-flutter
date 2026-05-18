@@ -19,7 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = const [
     DashboardScreen(),
     NewsScreen(),
-    NoticeScreen(),
+    // NoticeScreen(),
     GalleryScreen(),
     ProfileScreen(),
   ];
@@ -82,10 +82,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icon(Icons.newspaper_outlined),
                   label: 'News',
                 ),
-                const BottomNavigationBarItem(
-                  icon: Icon(Icons.notifications_active_outlined),
-                  label: 'Notice',
-                ),
+                // const BottomNavigationBarItem(
+                //   icon: Icon(Icons.notifications_active_outlined),
+                //   label: 'Notice',
+                // ),
                 const BottomNavigationBarItem(
                   icon: Icon(Icons.business_center_outlined),
                   label: 'Gallery',

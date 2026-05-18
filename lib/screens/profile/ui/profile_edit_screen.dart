@@ -239,6 +239,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
+                  readOnly: true,
                   controller: _districtController, // CHANGED
                   decoration: const InputDecoration(labelText: 'District', prefixIcon: Icon(Icons.wc)),
                 ),
@@ -291,7 +292,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _addressController, // HOME ADDRESS
-                  decoration: const InputDecoration(labelText: 'Address', prefixIcon: Icon(Icons.location_on)),
+                  decoration: const InputDecoration(labelText: 'Residence Address', prefixIcon: Icon(Icons.add_home)),
                   maxLines: 2,
                 ),
                 const SizedBox(height: 16),

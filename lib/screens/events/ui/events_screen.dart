@@ -104,63 +104,63 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
                   event.description,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
-                event.srcfStatus.isEmpty?
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildRSVPButton(
-                      label: 'Accept',
-                      icon: Icons.check_circle_outline,
-                      color: Colors.green,
-                      onPressed: () => _showRSVPDialog(
-                        eventId: event.id.toString(),
-                        status: 'accepted',
-                        themeColor: Colors.green,
-                      ),
-                    ),
-                    _buildRSVPButton(
-                      label: 'Maybe',
-                      icon: Icons.help_outline,
-                      color: Colors.orange,
-                      onPressed: () => _showRSVPDialog(
-                        eventId: event.id.toString(),
-                        status: 'maybe',
-                        themeColor: Colors.orange,
-                      ),
-                    ),
-                    _buildRSVPButton(
-                      label: 'Decline',
-                      icon: Icons.cancel_outlined,
-                      color: Colors.red,
-                      onPressed: () => _showRSVPDialog(
-                        eventId: event.id.toString(),
-                        status: 'declined',
-                        themeColor: Colors.red,
-                      ),
-                    ),
-                  ],
-                ):
-                Align(
-                  alignment: Alignment.center,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.grey.shade400, width: 0.5),
-                    ),
-                    child: Text(
-                      event.srcfStatus.isNotEmpty
-                          ? '${event.srcfStatus[0].toUpperCase()}${event.srcfStatus.substring(1).toLowerCase()}'
-                          : '',
-                      style: const TextStyle(
-                        color: Colors.black87,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                )
+                // event.srcfStatus.isEmpty?
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.spaceAround,
+                //   children: [
+                //     _buildRSVPButton(
+                //       label: 'Accept',
+                //       icon: Icons.check_circle_outline,
+                //       color: Colors.green,
+                //       onPressed: () => _showRSVPDialog(
+                //         eventId: event.id.toString(),
+                //         status: 'accepted',
+                //         themeColor: Colors.green,
+                //       ),
+                //     ),
+                //     _buildRSVPButton(
+                //       label: 'Maybe',
+                //       icon: Icons.help_outline,
+                //       color: Colors.orange,
+                //       onPressed: () => _showRSVPDialog(
+                //         eventId: event.id.toString(),
+                //         status: 'maybe',
+                //         themeColor: Colors.orange,
+                //       ),
+                //     ),
+                //     _buildRSVPButton(
+                //       label: 'Decline',
+                //       icon: Icons.cancel_outlined,
+                //       color: Colors.red,
+                //       onPressed: () => _showRSVPDialog(
+                //         eventId: event.id.toString(),
+                //         status: 'declined',
+                //         themeColor: Colors.red,
+                //       ),
+                //     ),
+                //   ],
+                // ):
+                // Align(
+                //   alignment: Alignment.center,
+                //   child: Container(
+                //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                //     decoration: BoxDecoration(
+                //       color: Colors.grey.shade200,
+                //       borderRadius: BorderRadius.circular(20),
+                //       border: Border.all(color: Colors.grey.shade400, width: 0.5),
+                //     ),
+                //     child: Text(
+                //       event.srcfStatus.isNotEmpty
+                //           ? '${event.srcfStatus[0].toUpperCase()}${event.srcfStatus.substring(1).toLowerCase()}'
+                //           : '',
+                //       style: const TextStyle(
+                //         color: Colors.black87,
+                //         fontWeight: FontWeight.bold,
+                //         fontSize: 13,
+                //       ),
+                //     ),
+                //   ),
+                // )
 
               ],
             ),

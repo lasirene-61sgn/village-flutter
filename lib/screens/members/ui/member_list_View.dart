@@ -98,12 +98,6 @@ class _MembersListScreenState extends ConsumerState<MembersListScreen> {
       itemBuilder: (context, index) => _buildMemberTile(filteredMembers[index]),
     );
   }
-  Future<void> _launchUrl(String urlString) async {
-    final Uri url = Uri.parse(urlString);
-    if (!await launchUrl(url)) {
-      debugPrint('Could not launch $urlString');
-    }
-  }
   Widget _buildMemberTile(Member member) {
     return GestureDetector(
       onTap: (){
@@ -137,5 +131,18 @@ class _MembersListScreenState extends ConsumerState<MembersListScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _launchUrl(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    LaunchMode mode = LaunchMode.platformDefault;
+    if (url.scheme == 'tel' || url.scheme == 'mailto' || url.scheme == 'sms') {
+      mode = LaunchMode.externalApplication;
+    }
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: mode);
+    } else {
+      debugPrint('Could not launch $urlString');
+    }
   }
 }

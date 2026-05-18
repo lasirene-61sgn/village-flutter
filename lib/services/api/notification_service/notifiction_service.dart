@@ -16,13 +16,12 @@ class NotificationService {
 
   static Future<void> init() async {
     // 1. Request Permissions (Crucial for Android 13+)
-    if (!Platform.isIOS) {
-      await _messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-    }
+    // 1. Request Permissions
+    await _messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
 
     // 2. Initialize Local Notifications
     const initializationSettings = InitializationSettings(
@@ -44,19 +43,17 @@ class NotificationService {
         ?.createNotificationChannel(_channel);
 
     // 4. Set Foreground Presentation Options
-    if (!Platform.isIOS) {
-      await _messaging.setForegroundNotificationPresentationOptions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-    }
+    // 4. Set Foreground Presentation Options
+    await _messaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
 
     _setupMessageHandlers();
   }
 
   static void _setupMessageHandlers() {
-    if (Platform.isIOS) return;
     // STATE: FOREGROUND
     FirebaseMessaging.onMessage.listen((message) {
       final notification = message.notification;
@@ -94,7 +91,11 @@ class NotificationService {
   }
 
   static Future<String?> getToken() async {
-    if (Platform.isIOS) return null;
-    return await _messaging.getToken();
+    try {
+      return await _messaging.getToken();
+    } catch (e) {
+      print("Error getting device token: $e");
+      return null;
+    }
   }
 }
