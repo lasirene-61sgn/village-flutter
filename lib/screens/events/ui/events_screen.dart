@@ -53,15 +53,18 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
         children: [
           /// IMAGE
           if (hasImage)
-            ClipRRect(
-              borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(8)),
-              child: Image.network(
-                event.imagePaths.first,
-                height: 160,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _fallbackImage(),
+            GestureDetector(
+              onTap: () => _showFullImage(context, event.imagePaths.first),
+              child: ClipRRect(
+                borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(8)),
+                child: Image.network(
+                  event.imagePaths.first,
+                  height: 160,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _fallbackImage(),
+                ),
               ),
             ),
 
@@ -312,6 +315,43 @@ class _EventsScreenState extends ConsumerState<EventsScreen> {
       ),
     );
   }
+  void _showFullImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(10),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              InteractiveViewer(
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _fallbackImage() {
     return Container(
       height: 160,

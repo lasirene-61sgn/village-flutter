@@ -65,6 +65,43 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
     );
   }
 
+  void _showFullImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(10),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              InteractiveViewer(
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.black54,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildNewsCard(BuildContext context, News news) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -73,36 +110,40 @@ class _NewsScreenState extends ConsumerState<NewsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// Image
-          Container(
-            height: 160,
-            decoration: BoxDecoration(
-              color: AppTheme.primaryBlue,
-              borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(8)),
-            ),
-            child: ClipRRect(
-              borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(8)),
-              child: Image.network(
-                news.imagePath,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) {
-                  return const Center(
-                    child: Icon(
-                      Icons.article,
-                      size: 64,
-                      color: AppTheme.backgroundWhite,
-                    ),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return const Center(child: CircularProgressIndicator());
-                },
+          if (news.imagePath.isNotEmpty)
+            GestureDetector(
+              onTap: () => _showFullImage(context, news.imagePath),
+              child: Container(
+                height: 160,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryBlue,
+                  borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(8)),
+                ),
+                child: ClipRRect(
+                  borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(8)),
+                  child: Image.network(
+                    news.imagePath,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) {
+                      return const Center(
+                        child: Icon(
+                          Icons.article,
+                          size: 64,
+                          color: AppTheme.backgroundWhite,
+                        ),
+                      );
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(child: CircularProgressIndicator());
+                    },
+                  ),
+                ),
               ),
             ),
-          ),
 
           /// Details
           Padding(
